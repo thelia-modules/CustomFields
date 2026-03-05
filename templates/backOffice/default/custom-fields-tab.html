@@ -1,0 +1,92 @@
+<div class="form-container">
+    {form name="customfields_form_custom_field_value"}
+        <form
+                method="POST"
+                action="{url path='/admin/module/customfields/values/save'}"
+                {form_enctype}
+                class="clearfix"
+        >
+
+            {form_field field="source_id"}
+                <input type="hidden" name="{$name}" value="{$source_id}" />
+            {/form_field}
+
+            {form_field field="source"}
+                <input type="hidden" name="{$name}" value="{$source}" />
+            {/form_field}
+
+            <input type="hidden" name="edit_language_id" value="{$edit_language_id}" />
+
+            {form_hidden_fields}
+
+            {* Language toolbar *}
+            {include file="includes/inner-form-toolbar.html"
+            hide_flags=false
+            hide_submit_buttons=false
+            page_url={$page_url}
+            }
+
+            {if $custom_fields|@count > 0}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            {intl l="Custom Fields" d="customfields"}
+                        </h4>
+                    </div>
+
+                    <div class="panel-body">
+                        {foreach $custom_fields as $custom_field}
+                            <div class="form-group">
+                                <label for="custom_field_{$custom_field->getId()}" class="control-label">
+                                    {$custom_field->getTitle()}
+                                </label>
+
+                                {if $custom_field->getType() == 'text'}
+                                    <input
+                                            type="text"
+                                            id="custom_field_{$custom_field->getId()}"
+                                            name="custom_field_{$custom_field->getId()}"
+                                            class="form-control"
+                                            value="{$values[$custom_field->getId()]|default:''}"
+                                    />
+                                {elseif $custom_field->getType() == 'textarea'}
+                                    <textarea
+                                            id="custom_field_{$custom_field->getId()}"
+                                            name="custom_field_{$custom_field->getId()}"
+                                            class="form-control"
+                                            rows="5"
+                                    >{$values[$custom_field->getId()]|default:''}</textarea>
+                                {elseif $custom_field->getType() == 'wysiwyg'}
+                                    <textarea
+                                            id="custom_field_{$custom_field->getId()}"
+                                            name="custom_field_{$custom_field->getId()}"
+                                            class="form-control wysiwyg"
+                                            rows="5"
+                                    >{$values[$custom_field->getId()]|default:''}</textarea>
+                                {/if}
+
+                                <span class="help-block">
+                                {intl l="Code: %code" code={$custom_field->getCode()} d="customfields"}
+                            </span>
+                            </div>
+                        {/foreach}
+                    </div>
+                </div>
+
+                {* Bottom toolbar *}
+                {include file="includes/inner-form-toolbar.html"
+                hide_flags=false
+                hide_submit_buttons=false
+                page_url={$page_url}
+                page_bottom=true
+            }
+            {else}
+                <div class="alert alert-info">
+                    {intl l="No custom fields defined for this source." d="customfields"}
+                </div>
+            {/if}
+        </form>
+    {/form}
+    {hook name="wysiwyg.js" location="wysiwyg-customfields-edit-js" }
+
+</div>

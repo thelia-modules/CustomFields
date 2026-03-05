@@ -1,0 +1,170 @@
+{extends file="admin-layout.tpl"}
+
+{block name="no-return-functions"}
+    {$admin_current_location = 'tools_menu_header_customfields'}
+{/block}
+
+{block name="page-title"}{intl l='Custom Fields' d="customfields"}{/block}
+
+{block name="check-resource"}admin.content{/block}
+{block name="check-access"}view{/block}
+
+{block name="main-content"}
+
+    {if $error}
+        <div class="alert alert-danger">
+            {$error}
+        </div>
+    {/if}
+
+    <div class="general-block-decorator">
+        {form name="customfields_form_custom_field"}
+            <form
+                method="POST"
+                action="{if $custom_field}{url path='/admin/module/customfields/update/%id' id=$custom_field->getId()}{else}{url path='/admin/module/customfields/create'}{/if}"
+                {form_enctype}
+                class="clearfix"
+            >
+                {form_hidden_fields}
+
+                {if $form_error}
+                    <div class="alert alert-danger">
+                        {$form_error_message}
+                    </div>
+                {/if}
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    {if $custom_field}
+                                        {intl l="Edit custom field" d="customfields"}
+                                    {else}
+                                        {intl l="Create a custom field" d="customfields"}
+                                    {/if}
+                                </h4>
+                            </div>
+
+                            <div class="panel-body">
+                                {* Title field *}
+                                <div class="form-group">
+                                    {form_field field="title"}
+                                        <label for="{$label_attr.for}" class="control-label">
+                                            {$label}
+                                            {if $required}<span class="required">*</span>{/if}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="{$label_attr.for}"
+                                            name="{$name}"
+                                            class="form-control"
+                                            value="{$value}"
+                                            required="{$required}"
+                                            placeholder="{intl l='Enter the title' d='customfields'}"
+                                        />
+                                        {if $error}
+                                            <span class="help-block">{$error}</span>
+                                        {/if}
+                                    {/form_field}
+                                </div>
+
+                                {* Code field *}
+                                <div class="form-group">
+                                    {form_field field="code"}
+                                        <label for="{$label_attr.for}" class="control-label">
+                                            {$label}
+                                            {if $required}<span class="required">*</span>{/if}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="{$label_attr.for}"
+                                            name="{$name}"
+                                            class="form-control"
+                                            value="{$value}"
+                                            required="{$required}"
+                                            placeholder="{intl l='Enter the code (e.g., my_custom_field)' d='customfields'}"
+                                        />
+                                        {if $error}
+                                            <span class="help-block">{$error}</span>
+                                        {/if}
+                                        <span class="help-block">
+                                            {intl l="Use only lowercase letters, numbers and underscores" d="customfields"}
+                                        </span>
+                                    {/form_field}
+                                </div>
+
+                                {* Type field *}
+                                <div class="form-group">
+                                    {form_field field="type"}
+
+                                        <label for="{$label_attr.for}" class="control-label">
+                                            {$label}
+                                            {if $required}<span class="required">*</span>{/if}
+                                        </label>
+                                        <select
+                                            id="{$label_attr.for}"
+                                            name="{$name}"
+                                            class="form-control"
+                                            required="{$required}"
+                                        >
+                                            <option value="">{intl l="Select a type" d="customfields"}</option>
+                                            {foreach from=$choices item=choice}
+                                                <option value="{$choice->value}" {if $value == $choice->value}selected{/if}>{$choice->label}</option>
+                                            {/foreach}
+                                        </select>
+                                        {if $error}
+                                            <span class="help-block">{$error}</span>
+                                        {/if}
+                                    {/form_field}
+                                </div>
+
+                                {* Sources field *}
+                                <div class="form-group">
+                                    {form_field field="sources"}
+                                        <label for="{$label_attr.for}" class="control-label">
+                                            {$label}
+                                            {if $required}<span class="required">*</span>{/if}
+                                        </label>
+                                        <select
+                                            id="{$label_attr.for}"
+                                            name="{$name}"
+                                            class="form-control"
+                                            required="{$required}"
+                                            multiple
+                                        >
+                                            {foreach from=$choices item=choice}
+                                                <option value="{$choice->value}" {if is_array($value) && in_array($choice->value, $value)}selected{/if}>{$choice->label}</option>
+                                            {/foreach}
+                                        </select>
+                                        {if $error}
+                                            <span class="help-block">{$error}</span>
+                                        {/if}
+                                        <span class="help-block">
+                                            {intl l="Hold Ctrl (Windows) or Cmd (Mac) to select multiple sources" d="customfields"}
+                                        </span>
+                                    {/form_field}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <a href="{url path='/admin/module/customfields'}" class="btn btn-default">
+                            {intl l="Cancel" d="customfields"}
+                        </a>
+                        <button type="submit" class="btn btn-success pull-right">
+                            {if $custom_field}
+                                {intl l="Update" d="customfields"}
+                            {else}
+                                {intl l="Create" d="customfields"}
+                            {/if}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        {/form}
+    </div>
+{/block}

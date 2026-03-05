@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database defaultIdMethod="native" name="TheliaMain"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../../../vendor/thelia/propel/resources/xsd/database.xsd" >
+    <!--
+    See propel documentation on http://propelorm.org for all information about schema file
+
+    <table name="product_rel" namespace="CustomFields\Model">
+        <column autoIncrement="true" name="id" primaryKey="true" required="true" type="INTEGER" />
+        <column defaultValue="0" name="visible" required="true" type="TINYINT" />
+        <column defaultValue="0" name="position" required="true" type="INTEGER" />
+        <column name="title" size="255" type="VARCHAR" />
+        <column name="description" type="CLOB" />
+        <column name="chapo" type="LONGVARCHAR" />
+        <column name="postscriptum" type="LONGVARCHAR" />
+        <foreign-key foreignTable="product" name="fk_product_id" onDelete="CASCADE" onUpdate="RESTRICT">
+            <reference foreign="id" local="product_id" />
+        </foreign-key>
+        <behavior name="timestampable" />
+        <behavior name="i18n">
+            <parameter name="i18n_columns" value="title, description, chapo, postscriptum" />
+        </behavior>
+    </table>
+    -->
+
+    <!-- ===================== -->
+    <!-- custom_field           -->
+    <!-- ===================== -->
+    <table name="custom_field" namespace="CustomFields\Model">
+        <column name="id"    type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="code"  type="VARCHAR" size="100"  required="true"/>
+        <column name="title" type="VARCHAR" size="255"  required="true"/>
+        <column name="type"  type="ENUM"    valueSet="text,textarea, wysiwyg" required="true" default="text"/>
+
+        <unique>
+            <unique-column name="code"/>
+        </unique>
+    </table>
+
+    <!-- ===================== -->
+    <!-- custom_field_source    -->
+    <!-- ===================== -->
+    <table name="custom_field_source" namespace="CustomFields\Model">
+        <column name="custom_field_id" type="INTEGER" required="true" primaryKey="true"/>
+        <column name="source"          type="VARCHAR" size="100" required="true" primaryKey="true"/>
+        <!-- ex: content, product, ... -->
+
+        <foreign-key foreignTable="custom_field" onDelete="CASCADE" onUpdate="CASCADE">
+            <reference local="custom_field_id" foreign="id"/>
+        </foreign-key>
+    </table>
+
+    <!-- ===================== -->
+    <!-- custom_field_value     -->
+    <!-- ===================== -->
+    <table name="custom_field_value" namespace="CustomFields\Model">
+        <column name="id"              type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="custom_field_id" type="INTEGER" required="true"/>
+        <column name="source"          type="VARCHAR" size="100" required="true"/>
+        <column name="source_id"       type="INTEGER" required="true"/>
+        <column name="value"           type="LONGVARCHAR"/>
+
+
+        <foreign-key foreignTable="custom_field" onDelete="CASCADE" onUpdate="CASCADE">
+            <reference local="custom_field_id" foreign="id"/>
+        </foreign-key>
+
+        <!-- Index pour retrouver rapidement toutes les valeurs d'une source donnée -->
+        <index name="idx_cfv_source">
+            <index-column name="source"/>
+            <index-column name="source_id"/>
+        </index>
+
+        <!-- Contrainte d'unicité : une seule valeur par champ/source/entité -->
+        <unique name="uq_cfv_field_source">
+            <unique-column name="custom_field_id"/>
+            <unique-column name="source"/>
+            <unique-column name="source_id"/>
+        </unique>
+
+        <behavior name="i18n">
+            <parameter name="i18n_columns" value="value" />
+        </behavior>
+    </table>
+    <external-schema filename="vendor/thelia/config/schema.xml" referenceOnly="true"/>
+</database>
