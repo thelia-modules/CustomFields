@@ -6,8 +6,6 @@ namespace CustomFields\Controller\Admin;
 
 use CustomFields\Form\CustomFieldValueForm;
 use CustomFields\Model\CustomFieldQuery;
-use CustomFields\Model\CustomFieldSourceQuery;
-use CustomFields\Model\CustomFieldValue;
 use CustomFields\Model\CustomFieldValueQuery;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -48,10 +46,10 @@ final class CustomFieldValueController extends BaseAdminController
                 ->find();
 
             foreach ($customFields as $customField) {
-                $fieldKey = 'custom_field_' . $customField->getId();
+                $fieldKey = 'custom_field_'.$customField->getId();
                 $value = $this->getRequest()->request->get($fieldKey);
 
-                if ($value !== null) {
+                if (null !== $value) {
                     // Find or create custom field value
                     $customFieldValue = CustomFieldValueQuery::create()
                         ->filterByCustomFieldId($customField->getId())
@@ -71,14 +69,14 @@ final class CustomFieldValueController extends BaseAdminController
 
             // Redirect based on source type and save mode
             $redirectUrls = [
-                'product' => '/admin/products/update/?product_id=' . $sourceId,
-                'content' => '/admin/content/update/' . $sourceId,
-                'category' => '/admin/categories/update/' . $sourceId,
-                'folder' => '/admin/folders/update/' . $sourceId,
+                'product' => '/admin/products/update/?product_id='.$sourceId,
+                'content' => '/admin/content/update/'.$sourceId,
+                'category' => '/admin/categories/update?category_id='.$sourceId,
+                'folder' => '/admin/folders/update/'.$sourceId,
             ];
 
-            if ($saveMode === 'close') {
-                $redirectUrl = match($source) {
+            if ('close' === $saveMode) {
+                $redirectUrl = match ($source) {
                     'product' => '/admin/products',
                     'content' => '/admin/content',
                     'category' => '/admin/categories',
@@ -93,7 +91,7 @@ final class CustomFieldValueController extends BaseAdminController
                 'success' => Translator::getInstance()->trans('Custom field values saved successfully', [], 'customfields'),
             ];
 
-            if ($saveMode === 'stay') {
+            if ('stay' === $saveMode) {
                 $params['current_tab'] = 'custom_fields';
                 $params['edit_language_id'] = $editLanguageId;
             }
