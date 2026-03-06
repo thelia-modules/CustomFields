@@ -95,13 +95,8 @@ final class CustomFieldController extends BaseAdminController
 
         // Get all parents for the dropdown
         $parents = CustomFieldParentQuery::create()->find();
-        $parentChoices = [];
-        foreach ($parents as $parent) {
-            $parentChoices[$parent->getTitle()] = $parent->getId();
-        }
 
         $form = $this->createForm(CustomFieldForm::getName());
-        $form->get('custom_field_parent_id')->setChoices($parentChoices);
         $this->getParserContext()->addForm($form);
         $error = null;
 
