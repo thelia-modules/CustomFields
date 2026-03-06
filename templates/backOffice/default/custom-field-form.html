@@ -145,6 +145,51 @@
                                         </span>
                                     {/form_field}
                                 </div>
+
+                                {* Parent group *}
+                                <div class="form-group">
+                                    {form_field field="custom_field_parent_id"}
+                                        <label for="{$label_attr.for}" class="control-label">
+                                            {$label}
+                                        </label>
+                                        <select
+                                            id="{$label_attr.for}"
+                                            name="{$name}"
+                                            class="form-control"
+                                        >
+                                            <option value="">{intl l="No parent" d="customfields"}</option>
+                                            {foreach from=$choices item=choice}
+                                                <option value="{$choice->value}" {if $value == $choice->value}selected{/if}>{$choice->label}</option>
+                                            {/foreach}
+                                        </select>
+                                        {if $error}
+                                            <span class="help-block">{$error}</span>
+                                        {/if}
+                                        <span class="help-block">
+                                            {intl l="Select a parent group to organize this field" d="customfields"}
+                                        </span>
+                                    {/form_field}
+                                </div>
+
+                                {* Create new parent *}
+                                <div class="form-group">
+                                    {form_field field="new_parent_title"}
+                                        <label for="{$label_attr.for}" class="control-label">
+                                            {$label}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="{$label_attr.for}"
+                                            name="{$name}"
+                                            class="form-control"
+                                            value="{$value}"
+                                            placeholder="{intl l='Enter a new parent group name' d='customfields'}"
+                                        />
+                                        {if $error}
+                                            <span class="help-block">{$error}</span>
+                                        {/if}
+                                    {/form_field}
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -28,10 +28,21 @@ return [
     'Code' => 'Code',
     'Type' => 'Type',
     'Text' => 'Texte',
+    'Textarea' => 'Zone de texte',
+    'Wysiwyg' => 'Éditeur WYSIWYG',
     'Number' => 'Nombre',
     'Date' => 'Date',
     'Boolean' => 'Booléen',
     'Unknown' => 'Inconnu',
+    'Sources' => 'Sources',
+    'Source' => 'Source',
+
+    // Sources
+    'Content' => 'Contenu',
+    'Product' => 'Produit',
+    'Category' => 'Catégorie',
+    'Folder' => 'Dossier',
+    'General' => 'Général',
 
     // List page
     'ID' => 'ID',
@@ -43,14 +54,33 @@ return [
     'Are you sure you want to delete this custom field?' => 'Êtes-vous sûr de vouloir supprimer ce champ personnalisé ?',
 
     // Form page
-    'Create a custom field' => 'Créer un champ personnalisé',
     'Edit custom field' => 'Modifier un champ personnalisé',
     'Enter the title' => 'Entrez le titre',
     'Enter the code (e.g., my_custom_field)' => 'Entrez le code (ex: mon_champ_perso)',
     'Use only lowercase letters, numbers and underscores' => 'Utilisez uniquement des lettres minuscules, des chiffres et des underscores',
     'Select a type' => 'Sélectionnez un type',
+    'Hold Ctrl (Windows) or Cmd (Mac) to select multiple sources' => 'Maintenez Ctrl (Windows) ou Cmd (Mac) pour sélectionner plusieurs sources',
     'Cancel' => 'Annuler',
     'Create' => 'Créer',
     'Update' => 'Mettre à jour',
-    'Save custom fields' => 'Enregistrer les champs personnalisés'
+    'Close' => 'Fermer',
+
+    // Custom field values
+    'Save custom fields' => 'Enregistrer les champs personnalisés',
+    'Custom field values saved successfully' => 'Valeurs des champs personnalisés enregistrées avec succès',
+    'An error occurred while saving custom field values' => 'Une erreur est survenue lors de l\'enregistrement des valeurs',
+    'Code: %code' => 'Code : %code',
+    'No custom fields defined for this source.' => 'Aucun champ personnalisé défini pour cette source.',
+
+    // General values tab
+    'General Values' => 'Valeurs générales',
+    'General Custom Fields' => 'Champs personnalisés généraux',
+    'No general custom fields defined. Create custom fields with \'general\' source first.' => 'Aucun champ personnalisé général défini. Créez d\'abord des champs avec la source \'général\'.',
+
+    // Parent field
+    'Parent Group' => 'Groupe parent (optionnel)',
+    'No parent' => 'Aucun parent',
+    'Select a parent group to organize this field' => 'Sélectionnez un groupe parent pour organiser ce champ',
+    'Or create new parent' => 'Ou créer un nouveau parent',
+    'Enter a new parent group name' => 'Entrez un nom de groupe parent',
 ];

@@ -5,20 +5,31 @@ namespace CustomFields\Hook;
 use CustomFields\CustomFields;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
+use CustomFields\Service\CustomFieldSortingService;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Hook\BaseHook;
+use Thelia\Core\Template\Parser\ParserResolver;
+use Thelia\Model\Category;
+use Thelia\Model\CategoryQuery;
+use Thelia\Model\Content;
+use Thelia\Model\ContentQuery;
+use Thelia\Model\Folder;
+use Thelia\Model\FolderQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Product;
 use Thelia\Model\ProductQuery;
-use Thelia\Model\Content;
-use Thelia\Model\ContentQuery;
-use Thelia\Model\Category;
-use Thelia\Model\CategoryQuery;
-use Thelia\Model\Folder;
-use Thelia\Model\FolderQuery;
 
 class TabHook extends BaseHook
 {
+    public function __construct(
+        ?EventDispatcherInterface $dispatcher = null,
+        ?ParserResolver $parserResolver = null,
+        private readonly CustomFieldSortingService $sortingService
+    ) {
+        parent::__construct($dispatcher, $parserResolver);
+    }
+
     public function onProductTab(HookRenderBlockEvent $event): void
     {
         $productId = (int) $event->getArgument('id');
@@ -56,18 +67,22 @@ class TabHook extends BaseHook
             }
         }
 
+        // Group fields by parent
+        $groupedFields = $this->sortingService->groupByParent($customFields);
+
         $event->add([
             'id' => 'custom_fields',
-            'title' =>  $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
+            'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                "custom-fields-tab.html",
+                'custom-fields-tab.html',
                 [
                     'custom_fields' => $customFields,
+                    'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'source' => 'product',
                     'source_id' => $productId,
                     'edit_language_id' => $editLanguageId,
-                    'page_url' => '/admin/products/update?product_id=' . $productId,
+                    'page_url' => '/admin/products/update?product_id='.$productId,
                 ]
             ),
         ]);
@@ -109,18 +124,21 @@ class TabHook extends BaseHook
             }
         }
 
+        $groupedFields = $this->sortingService->groupByParent($customFields);
+
         $event->add([
             'id' => 'custom_fields',
-            'title' =>  $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
+            'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                "custom-fields-tab.html",
+                'custom-fields-tab.html',
                 [
                     'custom_fields' => $customFields,
+                    'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'source' => 'content',
                     'source_id' => $contentId,
                     'edit_language_id' => $editLanguageId,
-                    'page_url' => '/admin/content/update/' . $contentId,
+                    'page_url' => '/admin/content/update/'.$contentId,
                 ]
             ),
         ]);
@@ -162,18 +180,21 @@ class TabHook extends BaseHook
             }
         }
 
+        $groupedFields = $this->sortingService->groupByParent($customFields);
+
         $event->add([
             'id' => 'custom_fields',
-            'title' =>  $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
+            'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                "custom-fields-tab.html",
+                'custom-fields-tab.html',
                 [
                     'custom_fields' => $customFields,
+                    'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'source' => 'category',
                     'source_id' => $categoryId,
                     'edit_language_id' => $editLanguageId,
-                    'page_url' => '/admin/categories/update/' . $categoryId,
+                    'page_url' => '/admin/categories/update/'.$categoryId,
                 ]
             ),
         ]);
@@ -215,18 +236,21 @@ class TabHook extends BaseHook
             }
         }
 
+        $groupedFields = $this->sortingService->groupByParent($customFields);
+
         $event->add([
             'id' => 'custom_fields',
-            'title' =>  $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
+            'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                "custom-fields-tab.html",
+                'custom-fields-tab.html',
                 [
                     'custom_fields' => $customFields,
+                    'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'source' => 'folder',
                     'source_id' => $folderId,
                     'edit_language_id' => $editLanguageId,
-                    'page_url' => '/admin/folders/update/' . $folderId,
+                    'page_url' => '/admin/folders/update/'.$folderId,
                 ]
             ),
         ]);

@@ -27,50 +27,91 @@
             }
 
             {if $custom_fields|@count > 0}
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            {intl l="Custom Fields" d="customfields"}
-                        </h4>
-                    </div>
+                <div>
+                    {* Fields without parent *}
+                    {foreach $grouped_fields.no_parent as $custom_field}
+                        <div class="form-group">
+                            <label for="custom_field_{$custom_field->getId()}" class="control-label">
+                                {$custom_field->getTitle()}
+                            </label>
 
-                    <div class="panel-body">
-                        {foreach $custom_fields as $custom_field}
-                            <div class="form-group">
-                                <label for="custom_field_{$custom_field->getId()}" class="control-label">
-                                    {$custom_field->getTitle()}
-                                </label>
+                            {if $custom_field->getType() == 'text'}
+                                <input
+                                        type="text"
+                                        id="custom_field_{$custom_field->getId()}"
+                                        name="custom_field_{$custom_field->getId()}"
+                                        class="form-control"
+                                        value="{$values[$custom_field->getId()]|default:''}"
+                                />
+                            {elseif $custom_field->getType() == 'textarea'}
+                                <textarea
+                                        id="custom_field_{$custom_field->getId()}"
+                                        name="custom_field_{$custom_field->getId()}"
+                                        class="form-control"
+                                        rows="5"
+                                >{$values[$custom_field->getId()]|default:''}</textarea>
+                            {elseif $custom_field->getType() == 'wysiwyg'}
+                                <textarea
+                                        id="custom_field_{$custom_field->getId()}"
+                                        name="custom_field_{$custom_field->getId()}"
+                                        class="form-control wysiwyg"
+                                        rows="5"
+                                >{$values[$custom_field->getId()]|default:''}</textarea>
+                            {/if}
 
-                                {if $custom_field->getType() == 'text'}
-                                    <input
-                                            type="text"
-                                            id="custom_field_{$custom_field->getId()}"
-                                            name="custom_field_{$custom_field->getId()}"
-                                            class="form-control"
-                                            value="{$values[$custom_field->getId()]|default:''}"
-                                    />
-                                {elseif $custom_field->getType() == 'textarea'}
-                                    <textarea
-                                            id="custom_field_{$custom_field->getId()}"
-                                            name="custom_field_{$custom_field->getId()}"
-                                            class="form-control"
-                                            rows="5"
-                                    >{$values[$custom_field->getId()]|default:''}</textarea>
-                                {elseif $custom_field->getType() == 'wysiwyg'}
-                                    <textarea
-                                            id="custom_field_{$custom_field->getId()}"
-                                            name="custom_field_{$custom_field->getId()}"
-                                            class="form-control wysiwyg"
-                                            rows="5"
-                                    >{$values[$custom_field->getId()]|default:''}</textarea>
-                                {/if}
+                            <span class="help-block">
+                                    {intl l="Code: %code" code={$custom_field->getCode()} d="customfields"}
+                                </span>
+                        </div>
+                    {/foreach}
 
-                                <span class="help-block">
-                                {intl l="Code: %code" code={$custom_field->getCode()} d="customfields"}
-                            </span>
+                    {* Parent field groups *}
+                    {foreach $grouped_fields.parents as $parent_group}
+                        <div class="panel panel-info" style="margin-top: 20px;">
+                            <div class="panel-heading">
+                                <h5 class="panel-title">
+                                    <i class="glyphicon glyphicon-folder-open" style="margin-right: 5px;"></i> {$parent_group.parent->getTitle()}
+                                </h5>
                             </div>
-                        {/foreach}
-                    </div>
+                            <div class="panel-body">
+                                {foreach $parent_group.children as $custom_field}
+                                    <div class="form-group">
+                                        <label for="custom_field_{$custom_field->getId()}" class="control-label">
+                                            {$custom_field->getTitle()}
+                                        </label>
+
+                                        {if $custom_field->getType() == 'text'}
+                                            <input
+                                                    type="text"
+                                                    id="custom_field_{$custom_field->getId()}"
+                                                    name="custom_field_{$custom_field->getId()}"
+                                                    class="form-control"
+                                                    value="{$values[$custom_field->getId()]|default:''}"
+                                            />
+                                        {elseif $custom_field->getType() == 'textarea'}
+                                            <textarea
+                                                    id="custom_field_{$custom_field->getId()}"
+                                                    name="custom_field_{$custom_field->getId()}"
+                                                    class="form-control"
+                                                    rows="5"
+                                            >{$values[$custom_field->getId()]|default:''}</textarea>
+                                        {elseif $custom_field->getType() == 'wysiwyg'}
+                                            <textarea
+                                                    id="custom_field_{$custom_field->getId()}"
+                                                    name="custom_field_{$custom_field->getId()}"
+                                                    class="form-control wysiwyg"
+                                                    rows="5"
+                                            >{$values[$custom_field->getId()]|default:''}</textarea>
+                                        {/if}
+
+                                        <span class="help-block">
+                                                {intl l="Code: %code" code={$custom_field->getCode()} d="customfields"}
+                                            </span>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        </div>
+                    {/foreach}
                 </div>
 
                 {* Bottom toolbar *}

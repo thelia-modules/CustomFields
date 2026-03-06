@@ -6,9 +6,13 @@ namespace CustomFields\Controller\Admin;
 
 use CustomFields\Form\CustomFieldForm;
 use CustomFields\Model\CustomField;
+use CustomFields\Model\CustomFieldParent;
+use CustomFields\Model\CustomFieldParentQuery;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldSource;
 use CustomFields\Model\CustomFieldSourceQuery;
+use CustomFields\Model\CustomFieldValueQuery;
+use CustomFields\Service\CustomFieldSortingService;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -19,10 +23,16 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Translation\Translator;
 use Thelia\Form\Exception\FormValidationException;
+use Thelia\Model\LangQuery;
 use Thelia\Tools\URL;
 
 final class CustomFieldController extends BaseAdminController
 {
+    public function __construct(
+        private readonly CustomFieldSortingService $sortingService
+    ) {
+    }
+
     #[Route(path: '/admin/module/customfields', name: 'customfields-list')]
     public function listCustomFields(): Response
     {
@@ -32,8 +42,47 @@ final class CustomFieldController extends BaseAdminController
 
         $customFields = CustomFieldQuery::create()->find();
 
+        // Get current tab
+        $currentTab = $this->getRequest()->query->get('current_tab', 'fields');
+
+
+        $generalValues = [];
+        $editLanguageId = (int) $this->getRequest()->query->get('edit_language_id', $this->getSession()->getLang()->getId());
+
+        $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
+
+        // Get all custom fields with 'general' source
+        $generalCustomFields = CustomFieldQuery::create()
+            ->useCustomFieldSourceQuery()
+            ->filterBySource('general')
+            ->endUse()
+            ->find();
+
+        // Get existing values for general fields (source_id = 1 for general)
+        foreach ($generalCustomFields as $customField) {
+            $value = CustomFieldValueQuery::create()
+                ->filterByCustomFieldId($customField->getId())
+                ->filterBySource('general')
+                ->findOne();
+
+            if ($value) {
+                $value->setLocale($locale);
+                $generalValues[$customField->getId()] = $value->getValue();
+            } else {
+                $generalValues[$customField->getId()] = '';
+            }
+        }
+
+        // Group general fields by parent
+        $groupedGeneralFields = $this->sortingService->groupByParent($generalCustomFields);
+
         return $this->render('custom-field-list', [
             'custom_fields' => $customFields,
+            'current_tab' => $currentTab,
+            'general_custom_fields' => $generalCustomFields,
+            'grouped_general_fields' => $groupedGeneralFields,
+            'general_values' => $generalValues,
+            'edit_language_id' => $editLanguageId,
         ]);
     }
 
@@ -44,17 +93,39 @@ final class CustomFieldController extends BaseAdminController
             return $response;
         }
 
+        // Get all parents for the dropdown
+        $parents = CustomFieldParentQuery::create()->find();
+        $parentChoices = [];
+        foreach ($parents as $parent) {
+            $parentChoices[$parent->getTitle()] = $parent->getId();
+        }
+
         $form = $this->createForm(CustomFieldForm::getName());
+        $form->get('custom_field_parent_id')->setChoices($parentChoices);
+        $this->getParserContext()->addForm($form);
         $error = null;
 
         try {
             $validatedForm = $this->validateForm($form);
+
+            // Handle new parent creation
+            $parentId = $validatedForm->get('custom_field_parent_id')->getData();
+            $newParentTitle = $validatedForm->get('new_parent_title')->getData();
+
+            if (!empty($newParentTitle)) {
+                $newParent = new CustomFieldParent();
+                $newParent
+                    ->setTitle($newParentTitle)
+                    ->save();
+                $parentId = $newParent->getId();
+            }
 
             $customField = new CustomField();
             $customField
                 ->setTitle($validatedForm->get('title')->getData())
                 ->setCode($validatedForm->get('code')->getData())
                 ->setType($validatedForm->get('type')->getData())
+                ->setCustomFieldParentId($parentId ?: null)
                 ->save();
 
             // Save sources
@@ -85,6 +156,7 @@ final class CustomFieldController extends BaseAdminController
         return $this->render('custom-field-form', [
             'error' => $error,
             'custom_field' => null,
+            'parents' => $parents,
         ]);
     }
 
@@ -114,12 +186,16 @@ final class CustomFieldController extends BaseAdminController
             $sourcesArray[] = $existingSource->getSource();
         }
 
+        // Get all parents for the dropdown
+        $parents = CustomFieldParentQuery::create()->find();
+
         $form = $this->createForm(CustomFieldForm::getName(), FormType::class, [
             'id' => $customField->getId(),
             'title' => $customField->getTitle(),
             'code' => $customField->getCode(),
             'type' => $customField->getType(),
             'sources' => $sourcesArray,
+            'custom_field_parent_id' => $customField->getCustomFieldParentId(),
         ]);
         $this->getParserContext()->addForm($form);
         $error = null;
@@ -127,10 +203,23 @@ final class CustomFieldController extends BaseAdminController
         try {
             $validatedForm = $this->validateForm($form);
 
+            // Handle new parent creation
+            $parentId = $validatedForm->get('custom_field_parent_id')->getData();
+            $newParentTitle = $validatedForm->get('new_parent_title')->getData();
+
+            if (!empty($newParentTitle)) {
+                $newParent = new CustomFieldParent();
+                $newParent
+                    ->setTitle($newParentTitle)
+                    ->save();
+                $parentId = $newParent->getId();
+            }
+
             $customField
                 ->setTitle($validatedForm->get('title')->getData())
                 ->setCode($validatedForm->get('code')->getData())
                 ->setType($validatedForm->get('type')->getData())
+                ->setCustomFieldParentId($parentId ?: null)
                 ->save();
 
             // Delete existing sources and save new ones
@@ -165,6 +254,7 @@ final class CustomFieldController extends BaseAdminController
         return $this->render('custom-field-form', [
             'error' => $error,
             'custom_field' => $customField,
+            'parents' => $parents,
         ]);
     }
 

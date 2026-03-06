@@ -11,15 +11,16 @@ use Thelia\Model\LangQuery;
 class CustomFieldService
 {
     /**
-     * Get custom field value by code, source, source_id and locale
+     * Get custom field value by code, source, source_id and locale.
      *
-     * @param string $code The custom field code
-     * @param string $source The source type (product, content, category, folder)
-     * @param int $sourceId The source entity ID
-     * @param string|null $locale The locale (e.g., 'en_US'). If null, uses the default locale.
+     * @param string      $code     The custom field code
+     * @param string      $source   The source type (product, content, category, folder, general)
+     * @param int|null    $sourceId The source entity ID (no ID if general)
+     * @param string|null $locale   The locale (e.g., 'en_US'). If null, uses the default locale.
+     *
      * @return string|null The custom field value or null if not found
      */
-    public function getCustomFieldValue(string $code, string $source, int $sourceId, ?string $locale = null): ?string
+    public function getCustomFieldValue(string $code, string $source, ?int $sourceId = null, ?string $locale = null): ?string
     {
         // Get the custom field by code
         $customField = CustomFieldQuery::create()
@@ -43,18 +44,22 @@ class CustomFieldService
         }
 
         // Get the value
-        $customFieldValue = CustomFieldValueQuery::create()
+        $customFieldValueQuery = CustomFieldValueQuery::create()
             ->filterByCustomFieldId($customField->getId())
-            ->filterBySource($source)
-            ->filterBySourceId($sourceId)
-            ->findOne();
+            ->filterBySource($source);
+
+        if (null !== $sourceId) {
+            $customFieldValueQuery->filterBySourceId($sourceId);
+        }
+
+        $customFieldValue = $customFieldValueQuery->findOne();
 
         if (!$customFieldValue) {
             return null;
         }
 
         // Set locale if provided
-        if ($locale !== null) {
+        if (null !== $locale) {
             $customFieldValue->setLocale($locale);
         }
 
@@ -62,12 +67,13 @@ class CustomFieldService
     }
 
     /**
-     * Get custom field value by code, source, source_id and language ID
+     * Get custom field value by code, source, source_id and language ID.
      *
-     * @param string $code The custom field code
-     * @param string $source The source type (product, content, category, folder)
-     * @param int $sourceId The source entity ID
-     * @param int $languageId The language ID
+     * @param string $code       The custom field code
+     * @param string $source     The source type (product, content, category, folder)
+     * @param int    $sourceId   The source entity ID
+     * @param int    $languageId The language ID
+     *
      * @return string|null The custom field value or null if not found
      */
     public function getCustomFieldValueByLangId(string $code, string $source, int $sourceId, int $languageId): ?string

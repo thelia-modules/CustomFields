@@ -21,11 +21,11 @@
         <language>en_US</language>
         <language>fr_FR</language>
     </languages>
-    <version></version>
+    <version>1.0.0</version>
     <authors>
         <author>
-            <name></name>
-            <email></email>
+            <name>Openstudio</name>
+            <email>lnormandon@openstudio.fr</email>
         </author>
     </authors>
     <type>classic</type>

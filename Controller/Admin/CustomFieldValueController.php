@@ -33,8 +33,8 @@ final class CustomFieldValueController extends BaseAdminController
         try {
             $validatedForm = $this->validateForm($form);
 
-            $sourceId = (int) $validatedForm->get('source_id')->getData();
             $source = $validatedForm->get('source')->getData();
+            $sourceId = $source === 'general' ? null : (int) $validatedForm->get('source_id')->getData();
             $editLanguageId = (int) $this->getRequest()->request->get('edit_language_id', $this->getSession()->getLang()->getId());
             $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
 
@@ -73,6 +73,7 @@ final class CustomFieldValueController extends BaseAdminController
                 'content' => '/admin/content/update/'.$sourceId,
                 'category' => '/admin/categories/update?category_id='.$sourceId,
                 'folder' => '/admin/folders/update/'.$sourceId,
+                'general' => '/admin/module/customfields',
             ];
 
             if ('close' === $saveMode) {
@@ -81,6 +82,7 @@ final class CustomFieldValueController extends BaseAdminController
                     'content' => '/admin/content',
                     'category' => '/admin/categories',
                     'folder' => '/admin/folders',
+                    'general' => '/admin/module/customfields',
                     default => '/admin/module/customfields',
                 };
             } else {
@@ -92,7 +94,11 @@ final class CustomFieldValueController extends BaseAdminController
             ];
 
             if ('stay' === $saveMode) {
-                $params['current_tab'] = 'custom_fields';
+                if ($source === 'general') {
+                    $params['current_tab'] = 'general_values';
+                } else {
+                    $params['current_tab'] = 'custom_fields';
+                }
                 $params['edit_language_id'] = $editLanguageId;
             }
 

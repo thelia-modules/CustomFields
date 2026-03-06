@@ -4,6 +4,19 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ---------------------------------------------------------------------
+-- custom_field_parent
+-- ---------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `custom_field_parent`;
+
+CREATE TABLE `custom_field_parent`
+(
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `title` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
 -- custom_field
 -- ---------------------------------------------------------------------
 
@@ -15,8 +28,15 @@ CREATE TABLE `custom_field`
     `code` VARCHAR(100) NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `type` TINYINT DEFAULT 0 NOT NULL,
+    `custom_field_parent_id` INTEGER,
     PRIMARY KEY (`id`),
-    UNIQUE INDEX `custom_field_u_4db226` (`code`)
+    UNIQUE INDEX `custom_field_u_4db226` (`code`),
+    INDEX `custom_field_fi_636d31` (`custom_field_parent_id`),
+    CONSTRAINT `custom_field_fk_636d31`
+        FOREIGN KEY (`custom_field_parent_id`)
+        REFERENCES `custom_field_parent` (`id`)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -48,7 +68,7 @@ CREATE TABLE `custom_field_value`
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `custom_field_id` INTEGER NOT NULL,
     `source` VARCHAR(100) NOT NULL,
-    `source_id` INTEGER NOT NULL,
+    `source_id` INTEGER,
     PRIMARY KEY (`id`),
     UNIQUE INDEX `uq_cfv_field_source` (`custom_field_id`, `source`, `source_id`),
     INDEX `idx_cfv_source` (`source`, `source_id`),
