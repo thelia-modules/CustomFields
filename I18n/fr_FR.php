@@ -37,6 +37,7 @@ return [
     'Sources' => 'Sources',
     'Source' => 'Source',
 
+
     // Sources
     'Content' => 'Contenu',
     'Product' => 'Produit',

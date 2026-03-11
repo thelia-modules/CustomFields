@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace CustomFields\Controller\Admin;
 
+use CustomFields\CustomFields;
 use CustomFields\Form\CustomFieldValueForm;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
+use CustomFields\Model\Map\CustomFieldTableMap;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +23,7 @@ use Thelia\Tools\URL;
 
 final class CustomFieldValueController extends BaseAdminController
 {
+
     #[Route(path: '/admin/module/customfields/values/save', name: 'customfields-values-save', methods: ['POST'])]
     public function saveCustomFieldValues(): Response
     {
@@ -57,10 +60,16 @@ final class CustomFieldValueController extends BaseAdminController
                         ->filterBySourceId($sourceId)
                         ->findOneOrCreate();
 
-                    $customFieldValue
-                        ->setLocale($locale)
-                        ->setValue($value)
-                        ->save();
+                    if (in_array($customField->getType(), CustomFields::CUSTOM_FIELD_SIMPLE_VALUES)) {
+                        $customFieldValue
+                            ->setSimpleValue($value)
+                            ->save();
+                    } else {
+                        $customFieldValue
+                            ->setLocale($locale)
+                            ->setValue($value)
+                            ->save();
+                    }
                 }
             }
 

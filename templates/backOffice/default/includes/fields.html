@@ -1,0 +1,81 @@
+<div class="form-group">
+    <label for="custom_field_{$custom_field->getId()}" class="control-label">
+        {$custom_field->getTitle()}
+    </label>
+
+    {if $custom_field->getType() == 'text'}
+        <input
+                type="text"
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                class="form-control"
+                value="{$values[$custom_field->getId()]|default:''}"
+        />
+    {elseif $custom_field->getType() == 'textarea'}
+        <textarea
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                class="form-control"
+                rows="5"
+        >{$values[$custom_field->getId()]|default:''}</textarea>
+    {elseif $custom_field->getType() == 'wysiwyg'}
+        <textarea
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                class="form-control wysiwyg"
+                rows="5"
+        >{$values[$custom_field->getId()]|default:''}</textarea>
+    {elseif $custom_field->getType() == 'content'}
+        {$value =$values[$custom_field->getId()]|default:''}
+        <input
+                type="number"
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                class="form-control"
+                value="{$value}"
+        />
+        {if $value}
+            <a href="/admin/content/update/{$value}">Voir le contenu</a>
+        {/if}
+    {elseif $custom_field->getType() == 'folder'}
+        {$value =$values[$custom_field->getId()]|default:''}
+        <input
+                type="number"
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                class="form-control"
+                value="{$value}"
+        />
+        {if $value}
+            <a href="/admin/folders/update/{$value}">Voir le dossier</a>
+        {/if}
+    {elseif $custom_field->getType() == 'product'}
+        {$value =$values[$custom_field->getId()]|default:''}
+        <input
+                type="number"
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                class="form-control"
+                value="{$value}"
+        />
+        {if $value}
+            <a href="/admin/products/update/?product_id={$value}">Voir le produit</a>
+        {/if}
+    {elseif $custom_field->getType() == 'category'}
+        {$value =$values[$custom_field->getId()]|default:''}
+        <input
+                type="number"
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                class="form-control"
+                value="{$value}"
+        />
+        {if $value}
+            <a href="/admin/categories/update?category_id={$value}">Voir la catégorie</a>
+        {/if}
+    {/if}
+
+    <span class="help-block">
+        {intl l="Code: %code" code={$custom_field->getCode()} d="customfields"}
+    </span>
+</div>

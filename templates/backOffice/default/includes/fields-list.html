@@ -1,0 +1,22 @@
+<div>
+    {* Fields without parent *}
+    {foreach $grouped_fields.no_parent as $custom_field}
+        {include file="./fields.html" }
+    {/foreach}
+
+    {* Parent field groups *}
+    {foreach $grouped_fields.parents as $parent_group}
+        <div class="panel panel-info" style="margin-top: 20px;">
+            <div class="panel-heading">
+                <h5 class="panel-title">
+                    <i class="glyphicon glyphicon-folder-open" style="margin-right: 5px;"></i> {$parent_group.parent->getTitle()}
+                </h5>
+            </div>
+            <div class="panel-body">
+                {foreach $parent_group.children as $custom_field}
+                    {include file="./fields.html" }
+                {/foreach}
+            </div>
+        </div>
+    {/foreach}
+</div>

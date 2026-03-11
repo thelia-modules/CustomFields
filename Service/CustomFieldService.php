@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CustomFields\Service;
 
+use CustomFields\CustomFields;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use Thelia\Model\LangQuery;
@@ -56,6 +57,10 @@ class CustomFieldService
 
         if (!$customFieldValue) {
             return null;
+        }
+
+        if (in_array($customField->getType(), CustomFields::CUSTOM_FIELD_SIMPLE_VALUES)) {
+            return $customFieldValue->getSimpleValue();
         }
 
         // Set locale if provided

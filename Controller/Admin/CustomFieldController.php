@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CustomFields\Controller\Admin;
 
+use CustomFields\CustomFields;
 use CustomFields\Form\CustomFieldForm;
 use CustomFields\Model\CustomField;
 use CustomFields\Model\CustomFieldParent;
@@ -65,7 +66,9 @@ final class CustomFieldController extends BaseAdminController
                 ->filterBySource('general')
                 ->findOne();
 
-            if ($value) {
+            if ($value && in_array($customField->getType(), CustomFields::CUSTOM_FIELD_SIMPLE_VALUES)) {
+                $generalValues[$customField->getId()] = $value->getSimpleValue() ?? '';
+            } elseif ($value) {
                 $value->setLocale($locale);
                 $generalValues[$customField->getId()] = $value->getValue();
             } else {

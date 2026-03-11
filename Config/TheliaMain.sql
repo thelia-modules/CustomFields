@@ -69,6 +69,7 @@ CREATE TABLE `custom_field_value`
     `custom_field_id` INTEGER NOT NULL,
     `source` VARCHAR(100) NOT NULL,
     `source_id` INTEGER,
+    `simple_value` TEXT,
     PRIMARY KEY (`id`),
     UNIQUE INDEX `uq_cfv_field_source` (`custom_field_id`, `source`, `source_id`),
     INDEX `idx_cfv_source` (`source`, `source_id`),

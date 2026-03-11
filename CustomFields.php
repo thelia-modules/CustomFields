@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CustomFields;
 
+use CustomFields\Model\Map\CustomFieldTableMap;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Symfony\Component\Finder\Finder;
@@ -14,6 +15,13 @@ class CustomFields extends BaseModule
 {
     /** @var string */
     const DOMAIN_NAME = 'customfields';
+    // champs qui n'ont pas de traductions
+    public const CUSTOM_FIELD_SIMPLE_VALUES = [
+        CustomFieldTableMap::COL_TYPE_CONTENT,
+        CustomFieldTableMap::COL_TYPE_CATEGORY,
+        CustomFieldTableMap::COL_TYPE_FOLDER,
+        CustomFieldTableMap::COL_TYPE_PRODUCT
+    ];
 
     /*
      * You may now override BaseModuleInterface methods, such as:
