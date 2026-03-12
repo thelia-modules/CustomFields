@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace CustomFields\Controller\Admin;
 
-use CustomFields\CustomFields;
 use CustomFields\Form\CustomFieldValueForm;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
@@ -12,6 +11,7 @@ use CustomFields\Model\Map\CustomFieldTableMap;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Annotation\Route;
 use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Core\Security\AccessManager;
@@ -21,10 +21,19 @@ use Thelia\Form\Exception\FormValidationException;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\URL;
 
+#[AsController]
+#[Route(path: '/admin/module/customfields', name: 'customfields_')]
 final class CustomFieldValueController extends BaseAdminController
 {
+    // champs qui n'ont pas de traductions
+    public const CUSTOM_FIELD_SIMPLE_VALUES = [
+        CustomFieldTableMap::COL_TYPE_CONTENT,
+        CustomFieldTableMap::COL_TYPE_CATEGORY,
+        CustomFieldTableMap::COL_TYPE_FOLDER,
+        CustomFieldTableMap::COL_TYPE_PRODUCT
+    ];
 
-    #[Route(path: '/admin/module/customfields/values/save', name: 'customfields-values-save', methods: ['POST'])]
+    #[Route(path: '/values/save', name: 'values_save', methods: ['POST'])]
     public function saveCustomFieldValues(): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::UPDATE)) {
@@ -60,7 +69,7 @@ final class CustomFieldValueController extends BaseAdminController
                         ->filterBySourceId($sourceId)
                         ->findOneOrCreate();
 
-                    if (in_array($customField->getType(), CustomFields::CUSTOM_FIELD_SIMPLE_VALUES)) {
+                    if (in_array($customField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES)) {
                         $customFieldValue
                             ->setSimpleValue($value)
                             ->save();
@@ -82,7 +91,7 @@ final class CustomFieldValueController extends BaseAdminController
                 'content' => '/admin/content/update/'.$sourceId,
                 'category' => '/admin/categories/update?category_id='.$sourceId,
                 'folder' => '/admin/folders/update/'.$sourceId,
-                'general' => '/admin/module/customfields',
+                'general' => '/admin/module/customfields/list',
             ];
 
             if ('close' === $saveMode) {
@@ -91,11 +100,11 @@ final class CustomFieldValueController extends BaseAdminController
                     'content' => '/admin/content',
                     'category' => '/admin/categories',
                     'folder' => '/admin/folders',
-                    'general' => '/admin/module/customfields',
-                    default => '/admin/module/customfields',
+                    'general' => '/admin/module/customfields/list',
+                    default => '/admin/module/customfields/list',
                 };
             } else {
-                $redirectUrl = $redirectUrls[$source] ?? '/admin/module/customfields';
+                $redirectUrl = $redirectUrls[$source] ?? '/admin/module/customfields/list';
             }
 
             $params = [
@@ -123,7 +132,7 @@ final class CustomFieldValueController extends BaseAdminController
         }
 
         return new RedirectResponse(
-            URL::getInstance()->absoluteUrl('/admin/module/customfields', [
+            URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
                 'error' => $error ?? 'Unknown error',
             ])
         );

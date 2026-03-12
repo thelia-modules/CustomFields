@@ -1,0 +1,41 @@
+
+<div style="margin-bottom: 50px; margin-top: 20px;">
+    <h2>Exporter</h2>
+    <p>
+        Génère un fichier qui permet d'exporter les champs personnalisés existants en format JSON.
+        On peut le réimporter dans un autre site pour réutiliser les champs personnalisés (créer les nouveaux mais n'écrase pas les anciens).
+    </p>
+    <div>
+        <a href="{url path='/admin/module/customfields/export'}" class="btn btn-sm btn-success">
+            <i class="glyphicon glyphicon-download-alt"></i>
+            {intl l="Export custom fields" d="customfields"}
+        </a>
+    </div>
+</div>
+
+<div class="form-container">
+    <h2>Importer</h2>
+
+    {form name="customfields_form_import"}
+        <form action="{url path='/admin/module/customfields/import'}" method="post" {form_enctype}>
+            {form_hidden_fields}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {form_field field="json_file"}
+                            <label for="{$label_attr.for}">
+                                {$label}
+                            </label>
+                            <input type="file" id="{$label_attr.for}" name="{$name}" class="form-control" accept=".json">
+                        {/form_field}
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary mt-4">
+                            {intl l='Import' d="customfields"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {/form}
+</div>

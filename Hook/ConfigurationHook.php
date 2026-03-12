@@ -15,7 +15,7 @@ class ConfigurationHook extends BaseHook
             [
                 'id' => 'tools_menu_header_customfields',
                 'class' => '',
-                'url' => URL::getInstance()?->absoluteUrl('/admin/module/customfields'),
+                'url' => URL::getInstance()?->absoluteUrl('/admin/module/customfields/list'),
                 'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             ]
         );

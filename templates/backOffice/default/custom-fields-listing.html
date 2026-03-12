@@ -1,0 +1,72 @@
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <div class="pull-right">
+            <a href="{url path='/admin/module/customfields/create'}" class="btn btn-sm btn-success">
+                <i class="glyphicon glyphicon-plus"></i>
+                {intl l="Create a custom field" d="customfields"}
+            </a>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        {if $custom_fields|@count > 0}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr>
+                        <th>{intl l="ID" d="customfields"}</th>
+                        <th>{intl l="Title" d="customfields"}</th>
+                        <th>{intl l="Code" d="customfields"}</th>
+                        <th>{intl l="Type" d="customfields"}</th>
+                        <th>{intl l="Source" d="customfields"}</th>
+                        <th class="text-right">{intl l="Actions" d="customfields"}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {foreach from=$custom_fields item=custom_field}
+                        <tr>
+                            <td>{$custom_field->getId()}</td>
+                            <td>{$custom_field->getTitle()}</td>
+                            <td><code>{$custom_field->getCode()}</code></td>
+                            <td>
+                                {if $custom_field->getType() === "textarea"}
+                                    {intl l="Textarea" d="customfields"}
+                                {elseif $custom_field->getType() === "text"}
+                                    {intl l="Text" d="customfields"}
+                                {elseif $custom_field->getType() === "wysiwyg"}
+                                    {intl l="Wysiwyg" d="customfields"}
+                                {else}
+                                    {$custom_field->getType()}
+                                {/if}
+                            </td>
+                            <td>
+                                {foreach from=$custom_field->getCustomFieldSources() item=source name=sources}
+                                    {$source->getSource()}{if not $smarty.foreach.sources.last}, {/if}
+                                {/foreach}
+                            </td>
+
+                            <td class="text-right">
+                                <a href="{url path='/admin/module/customfields/update/%id' id=$custom_field->getId()}"
+                                   class="btn btn-sm btn-default"
+                                   title="{intl l='Edit' d='customfields'}">
+                                    <i class="glyphicon glyphicon-edit"></i>
+                                </a>
+                                <a href="{url path='/admin/module/customfields/delete/%id' id=$custom_field->getId()}"
+                                   class="btn btn-sm btn-danger"
+                                   title="{intl l='Delete' d='customfields'}"
+                                   onclick="return confirm('{intl l='Are you sure you want to delete this custom field?' d='customfields'}');">
+                                    <i class="glyphicon glyphicon-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+            </div>
+        {else}
+            <div class="alert alert-info">
+                {intl l="No custom fields found." d="customfields"}
+            </div>
+        {/if}
+    </div>
+</div>

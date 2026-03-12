@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace CustomFields\Controller\Admin;
 
-use CustomFields\CustomFields;
 use CustomFields\Form\CustomFieldForm;
+use CustomFields\Form\CustomFieldImportForm;
 use CustomFields\Model\CustomField;
 use CustomFields\Model\CustomFieldParent;
 use CustomFields\Model\CustomFieldParentQuery;
@@ -14,19 +14,27 @@ use CustomFields\Model\CustomFieldSource;
 use CustomFields\Model\CustomFieldSourceQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
+use CustomFields\Service\ExportService;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\Form\Form;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Annotation\Route;
 use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Translation\Translator;
+use Thelia\Exception\TheliaProcessException;
 use Thelia\Form\Exception\FormValidationException;
+use Thelia\Log\Tlog;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\URL;
 
+#[AsController]
+#[Route(path: '/admin/module/customfields', name: 'customfields_')]
 final class CustomFieldController extends BaseAdminController
 {
     public function __construct(
@@ -34,7 +42,7 @@ final class CustomFieldController extends BaseAdminController
     ) {
     }
 
-    #[Route(path: '/admin/module/customfields', name: 'customfields-list')]
+    #[Route(path: '/list', name: 'list')]
     public function listCustomFields(): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::VIEW)) {
@@ -66,7 +74,7 @@ final class CustomFieldController extends BaseAdminController
                 ->filterBySource('general')
                 ->findOne();
 
-            if ($value && in_array($customField->getType(), CustomFields::CUSTOM_FIELD_SIMPLE_VALUES)) {
+            if ($value && in_array($customField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)) {
                 $generalValues[$customField->getId()] = $value->getSimpleValue() ?? '';
             } elseif ($value) {
                 $value->setLocale($locale);
@@ -89,7 +97,7 @@ final class CustomFieldController extends BaseAdminController
         ]);
     }
 
-    #[Route(path: '/admin/module/customfields/create', name: 'customfields-create', methods: ['GET', 'POST'])]
+    #[Route(path: '/create', name: 'create', methods: ['GET', 'POST'])]
     public function createCustomField(): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::CREATE)) {
@@ -107,39 +115,10 @@ final class CustomFieldController extends BaseAdminController
             $validatedForm = $this->validateForm($form);
 
             // Handle new parent creation
-            $parentId = $validatedForm->get('custom_field_parent_id')->getData();
-            $newParentTitle = $validatedForm->get('new_parent_title')->getData();
-
-            if (!empty($newParentTitle)) {
-                $newParent = new CustomFieldParent();
-                $newParent
-                    ->setTitle($newParentTitle)
-                    ->save();
-                $parentId = $newParent->getId();
-            }
-
-            $customField = new CustomField();
-            $customField
-                ->setTitle($validatedForm->get('title')->getData())
-                ->setCode($validatedForm->get('code')->getData())
-                ->setType($validatedForm->get('type')->getData())
-                ->setCustomFieldParentId($parentId ?: null)
-                ->save();
-
-            // Save sources
-            $sources = $validatedForm->get('sources')->getData();
-            if (is_array($sources)) {
-                foreach ($sources as $source) {
-                    $customFieldSource = new CustomFieldSource();
-                    $customFieldSource
-                        ->setCustomFieldId($customField->getId())
-                        ->setSource($source)
-                        ->save();
-                }
-            }
+            $this->handleSave($validatedForm);
 
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
                     'success' => Translator::getInstance()->trans('Custom field created successfully', [], 'customfields'),
                 ])
             );
@@ -158,7 +137,7 @@ final class CustomFieldController extends BaseAdminController
         ]);
     }
 
-    #[Route(path: '/admin/module/customfields/update/{id}', name: 'customfields-update', methods: ['GET', 'POST'])]
+    #[Route(path: '/update/{id}', name: 'update', methods: ['GET', 'POST'])]
     public function updateCustomField(int $id): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::UPDATE)) {
@@ -169,7 +148,7 @@ final class CustomFieldController extends BaseAdminController
 
         if (!$customField) {
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
                     'error' => Translator::getInstance()->trans('Custom field not found', [], 'customfields'),
                 ])
             );
@@ -200,44 +179,11 @@ final class CustomFieldController extends BaseAdminController
 
         try {
             $validatedForm = $this->validateForm($form);
+            $this->handleSave($validatedForm, $customField);
 
-            // Handle new parent creation
-            $parentId = $validatedForm->get('custom_field_parent_id')->getData();
-            $newParentTitle = $validatedForm->get('new_parent_title')->getData();
-
-            if (!empty($newParentTitle)) {
-                $newParent = new CustomFieldParent();
-                $newParent
-                    ->setTitle($newParentTitle)
-                    ->save();
-                $parentId = $newParent->getId();
-            }
-
-            $customField
-                ->setTitle($validatedForm->get('title')->getData())
-                ->setCode($validatedForm->get('code')->getData())
-                ->setType($validatedForm->get('type')->getData())
-                ->setCustomFieldParentId($parentId ?: null)
-                ->save();
-
-            // Delete existing sources and save new ones
-            CustomFieldSourceQuery::create()
-                ->filterByCustomFieldId($customField->getId())
-                ->delete();
-
-            $sources = $validatedForm->get('sources')->getData();
-            if (is_array($sources)) {
-                foreach ($sources as $source) {
-                    $customFieldSource = new CustomFieldSource();
-                    $customFieldSource
-                        ->setCustomFieldId($customField->getId())
-                        ->setSource($source)
-                        ->save();
-                }
-            }
 
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
                     'success' => Translator::getInstance()->trans('Custom field updated successfully', [], 'customfields'),
                 ])
             );
@@ -256,7 +202,48 @@ final class CustomFieldController extends BaseAdminController
         ]);
     }
 
-    #[Route(path: '/admin/module/customfields/delete/{id}', name: 'customfields-delete', methods: ['GET'])]
+    private function handleSave(Form $validatedForm, ?CustomField $customField = null)
+    {
+        // Handle new parent creation
+        $parentId = $validatedForm->get('custom_field_parent_id')->getData();
+        $newParentTitle = $validatedForm->get('new_parent_title')->getData();
+
+        if (!empty($newParentTitle)) {
+            $newParent = new CustomFieldParent();
+            $newParent
+                ->setTitle($newParentTitle)
+                ->save();
+            $parentId = $newParent->getId();
+        }
+        if (!$customField) {
+            $customField = new CustomField();
+        }
+
+        $customField
+            ->setTitle($validatedForm->get('title')->getData())
+            ->setCode($validatedForm->get('code')->getData())
+            ->setType($validatedForm->get('type')->getData())
+            ->setCustomFieldParentId($parentId ?: null)
+            ->save();
+
+        // Delete existing sources and save new ones
+        CustomFieldSourceQuery::create()
+            ->filterByCustomFieldId($customField->getId())
+            ->delete();
+
+        $sources = $validatedForm->get('sources')->getData();
+        if (is_array($sources)) {
+            foreach ($sources as $source) {
+                $customFieldSource = new CustomFieldSource();
+                $customFieldSource
+                    ->setCustomFieldId($customField->getId())
+                    ->setSource($source)
+                    ->save();
+            }
+        }
+    }
+
+    #[Route(path: '/delete/{id}', name: 'delete', methods: ['GET'])]
     public function deleteCustomField(int $id): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::DELETE)) {
@@ -267,7 +254,7 @@ final class CustomFieldController extends BaseAdminController
 
         if (!$customField) {
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
                     'error' => Translator::getInstance()->trans('Custom field not found', [], 'customfields'),
                 ])
             );
@@ -277,16 +264,83 @@ final class CustomFieldController extends BaseAdminController
             $customField->delete();
 
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
                     'success' => Translator::getInstance()->trans('Custom field deleted successfully', [], 'customfields'),
                 ])
             );
         } catch (PropelException $e) {
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
                     'error' => Translator::getInstance()->trans('An error occurred while deleting the custom field', [], 'customfields'),
                 ])
             );
         }
+    }
+
+    #[Route(path: '/export', name: 'export', methods: ['GET'])]
+    public function export(ExportService $exportService) {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::VIEW)) {
+            return $response;
+        }
+        $export = $exportService->getExportData();
+        $json = json_encode($export, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($json === false) {
+            throw new \RuntimeException('Impossible de générer le JSON.');
+        }
+        $fileName = sprintf('custom-fields-%s.json', date('Y-m-d-H-i-s'));
+
+        $response = new Response($json);
+        $response->headers->set('Content-Type', 'application/json');
+        $response->headers->set(
+            'Content-Disposition',
+            $response->headers->makeDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $fileName
+            )
+        );
+
+        return $response;
+    }
+    #[Route(path: '/import', name: 'import', methods: ['POST'])]
+    public function import(ExportService $exportService) {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::VIEW)) {
+            return $response;
+        }
+        $form = $this->createForm(CustomFieldImportForm::getName());
+        try {
+            $validatedForm = $this->validateForm($form);
+
+            $jsonFile = $validatedForm->get('json_file')->getData();
+
+            if ($jsonFile) {
+                $json = file_get_contents($jsonFile->getPathname());
+            } else {
+                $json = $validatedForm->get('json')->getData();
+
+                if (empty($json)) {
+                    throw new \Exception('Please provide JSON data either via file upload or text input');
+                }
+            }
+
+            $import = json_decode($json, true);
+            $exportService->importData($import);
+
+        } catch (FormValidationException $e) {
+            $form->setErrorMessage($this->createStandardFormValidationErrorMessage($e));
+        } catch (\Exception $e) {
+            Tlog::getInstance()->error(sprintf('Error during import: %s', $e->getMessage()));
+            return new RedirectResponse(
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
+                    'error' => Translator::getInstance()->trans('Error during custom field import', [], 'customfields'),
+                ])
+            );
+        }
+
+        return new RedirectResponse(
+            URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
+                'success' => Translator::getInstance()->trans('Custom field import successfully', [], 'customfields'),
+            ])
+        );
     }
 }
