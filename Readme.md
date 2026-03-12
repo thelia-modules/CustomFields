@@ -12,7 +12,7 @@ A Thelia module to add custom fields to products, content, categories, and folde
 
 ## Installation
 
-1. `composer require thelia/custom-fields`
+1. `composer require thelia/custom-fields-module`
 2. Activate the module in the back-office
 
 ## Usage

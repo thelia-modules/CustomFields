@@ -1,5 +1,5 @@
 {
-  "name": "your-vendor/custom-fields-module",
+  "name": "thelia/custom-fields-module",
   "description": "CustomFields module for Thelia",
   "license": "LGPL-3.0-or-later",
   "type": "thelia-module",
