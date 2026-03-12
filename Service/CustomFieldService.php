@@ -15,13 +15,13 @@ class CustomFieldService
      * Get custom field value by code, source, source_id and locale.
      *
      * @param string      $code     The custom field code
-     * @param string      $source   The source type (product, content, category, folder, general)
+     * @param string|null $source   The source type (product, content, category, folder, general)
      * @param int|null    $sourceId The source entity ID (no ID if general)
      * @param string|null $locale   The locale (e.g., 'en_US'). If null, uses the default locale.
      *
      * @return string|null The custom field value or null if not found
      */
-    public function getCustomFieldValue(string $code, string $source, ?int $sourceId = null, ?string $locale = null): ?string
+    public function getCustomFieldValue(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): ?string
     {
         // Get the custom field by code
         $customField = CustomFieldQuery::create()
@@ -81,7 +81,7 @@ class CustomFieldService
      *
      * @return string|null The custom field value or null if not found
      */
-    public function getCustomFieldValueByLangId(string $code, string $source, int $sourceId, int $languageId): ?string
+    public function getCustomFieldValueByLangId(string $code, ?string $source = 'general', int $sourceId, int $languageId): ?string
     {
         $lang = LangQuery::create()->findOneById($languageId);
 

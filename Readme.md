@@ -4,7 +4,7 @@ A Thelia module to add custom fields to products, content, categories, and folde
 
 ## Features
 
-- Create custom fields with different types (text, textarea)
+- Create custom fields with different types (text, textarea, wysiwyg, content (ID), product (ID), folder (ID), category (ID))
 - Assign custom fields to multiple sources (product, content, category, folder, general)
 - Multi-language support for field values
 - Tab integration in back-office edit pages
@@ -21,7 +21,7 @@ A Thelia module to add custom fields to products, content, categories, and folde
 
 1. **Create Custom Fields**: Go to Tools > Custom Fields
    - Enter a title and unique code (e.g., `warranty_period`)
-   - Select field type (text or textarea)
+   - Select field type
    - Choose which sources can use this field (product, content, category, folder, general)
 
 2. **Edit Field Values**: When editing a product/content/category/folder:
@@ -44,7 +44,7 @@ Use the `custom_field_value` function to display custom field values:
 {{ custom_field_value('warranty_period', 'product', product_id) }}
 
 {* Display custom general field *}
-{{ custom_field_value('warranty_period', 'general') }}
+{{ custom_field_value('warranty_period') }}
 
 {* Display custom field for specific locale *}
 {{ custom_field_value('warranty_period', 'product', product_id, 'en_US') }}
@@ -52,7 +52,7 @@ Use the `custom_field_value` function to display custom field values:
 
 **Parameters:**
 - `code`: The custom field code
-- `source`: Source type (`product`, `content`, `category`, `folder`)
+- `source`: Source type (`product`, `content`, `category`, `folder`) - default : `general`
 - `source_id`: The entity ID (no need to specify for `general` source)
 - `locale` (optional): Specific locale (defaults to current session locale)
 

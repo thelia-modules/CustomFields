@@ -32,7 +32,7 @@ class CustomFieldsTwigExtension extends AbstractExtension
      * @param string|null $locale Optional locale. If not provided, uses current session locale
      * @return string|null The custom field value or null if not found
      */
-    public function getCustomFieldValue(string $code, string $source, ?int $sourceId = null, ?string $locale = null): ?string
+    public function getCustomFieldValue(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): ?string
     {
         // If no locale provided, use current session locale
         if ($locale === null) {
