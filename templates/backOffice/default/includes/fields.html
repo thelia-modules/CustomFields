@@ -74,8 +74,12 @@
             <a href="/admin/categories/update?category_id={$value}">Voir la catégorie</a>
         {/if}
     {/if}
-
+    {$codeSource = ""}
+    {if $source != 'general'}
+        {$codeSource = ", '"|cat:$source|cat:"', source_id "}
+    {/if}
+    {$code = '{{ custom_field_value(\''|cat:$custom_field->getCode()|cat:'\') }}'}
     <span class="help-block">
-        {intl l="Code: %code" code={$custom_field->getCode()} d="customfields"}
+        {intl l="Code: %code" code='{{ custom_field_value(\''|cat:$custom_field->getCode()|cat:'\''|cat:$codeSource|cat:') }}' d="customfields"}
     </span>
 </div>

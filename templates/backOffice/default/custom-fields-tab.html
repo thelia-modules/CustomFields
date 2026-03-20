@@ -1,3 +1,4 @@
+{$currentSource = null}
 <div class="form-container">
     {form name="customfields_form_custom_field_value"}
         <form
@@ -13,6 +14,7 @@
 
             {form_field field="source"}
                 <input type="hidden" name="{$name}" value="{$source}" />
+                {$currentSource = $source}
             {/form_field}
 
             <input type="hidden" name="edit_language_id" value="{$edit_language_id}" />
@@ -27,7 +29,7 @@
             }
 
             {if $custom_fields|@count > 0}
-                {include file="./includes/fields-list.html"}
+                {include file="./includes/fields-list.html" source=$currentSource}
 
                 {* Bottom toolbar *}
                 {include file="includes/inner-form-toolbar.html"

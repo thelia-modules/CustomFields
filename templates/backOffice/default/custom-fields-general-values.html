@@ -29,8 +29,9 @@
         {if $general_custom_fields|@count > 0}
 
             {include file="./includes/fields-list.html"
-               grouped_fields=$grouped_general_fields
+                grouped_fields=$grouped_general_fields
                 values=$general_values
+                source='general'
             }
         {else}
             <div class="alert alert-info">

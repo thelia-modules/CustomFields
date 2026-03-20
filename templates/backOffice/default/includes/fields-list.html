@@ -14,7 +14,7 @@
             </div>
             <div class="panel-body">
                 {foreach $parent_group.children as $custom_field}
-                    {include file="./fields.html" }
+                    {include file="./fields.html" source=$source}
                 {/foreach}
             </div>
         </div>
