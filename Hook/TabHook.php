@@ -52,6 +52,7 @@ class TabHook extends BaseHook
 
         // Get existing values for the current language
         $values = [];
+        $valueIds = [];
         foreach ($customFields as $customField) {
             $value = CustomFieldValueQuery::create()
                 ->filterByCustomFieldId($customField->getId())
@@ -62,8 +63,10 @@ class TabHook extends BaseHook
             if ($value) {
                 $value->setLocale($locale);
                 $values[$customField->getId()] = $value->getValue();
+                $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
+                $valueIds[$customField->getId()] = null;
             }
         }
 
@@ -79,6 +82,7 @@ class TabHook extends BaseHook
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
+                    'value_ids' => $valueIds,
                     'source' => 'product',
                     'source_id' => $productId,
                     'edit_language_id' => $editLanguageId,
@@ -109,6 +113,7 @@ class TabHook extends BaseHook
             ->find();
 
         $values = [];
+        $valueIds = [];
         foreach ($customFields as $customField) {
             $value = CustomFieldValueQuery::create()
                 ->filterByCustomFieldId($customField->getId())
@@ -119,8 +124,10 @@ class TabHook extends BaseHook
             if ($value) {
                 $value->setLocale($locale);
                 $values[$customField->getId()] = $value->getValue();
+                $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
+                $valueIds[$customField->getId()] = null;
             }
         }
 
@@ -135,6 +142,7 @@ class TabHook extends BaseHook
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
+                    'value_ids' => $valueIds,
                     'source' => 'content',
                     'source_id' => $contentId,
                     'edit_language_id' => $editLanguageId,
@@ -165,6 +173,7 @@ class TabHook extends BaseHook
             ->find();
 
         $values = [];
+        $valueIds = [];
         foreach ($customFields as $customField) {
             $value = CustomFieldValueQuery::create()
                 ->filterByCustomFieldId($customField->getId())
@@ -175,8 +184,10 @@ class TabHook extends BaseHook
             if ($value) {
                 $value->setLocale($locale);
                 $values[$customField->getId()] = $value->getValue();
+                $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
+                $valueIds[$customField->getId()] = null;
             }
         }
 
@@ -191,6 +202,7 @@ class TabHook extends BaseHook
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
+                    'value_ids' => $valueIds,
                     'source' => 'category',
                     'source_id' => $categoryId,
                     'edit_language_id' => $editLanguageId,
@@ -221,6 +233,7 @@ class TabHook extends BaseHook
             ->find();
 
         $values = [];
+        $valueIds = [];
         foreach ($customFields as $customField) {
             $value = CustomFieldValueQuery::create()
                 ->filterByCustomFieldId($customField->getId())
@@ -231,8 +244,10 @@ class TabHook extends BaseHook
             if ($value) {
                 $value->setLocale($locale);
                 $values[$customField->getId()] = $value->getValue();
+                $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
+                $valueIds[$customField->getId()] = null;
             }
         }
 
@@ -247,6 +262,7 @@ class TabHook extends BaseHook
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
+                    'value_ids' => $valueIds,
                     'source' => 'folder',
                     'source_id' => $folderId,
                     'edit_language_id' => $editLanguageId,

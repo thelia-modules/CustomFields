@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<database defaultIdMethod="native" name="TheliaMain"
+<database defaultIdMethod="native" name="TheliaMain" namespace="CustomFields\Model"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="../../../vendor/thelia/propel/resources/xsd/database.xsd" >
     <!--
     See propel documentation on http://propelorm.org for all information about schema file
 
-    <table name="product_rel" namespace="CustomFields\Model">
+    <table name="product_rel">
         <column autoIncrement="true" name="id" primaryKey="true" required="true" type="INTEGER" />
         <column defaultValue="0" name="visible" required="true" type="TINYINT" />
         <column defaultValue="0" name="position" required="true" type="INTEGER" />
@@ -26,7 +26,7 @@
     <!-- ===================== -->
     <!-- custom_field_parent    -->
     <!-- ===================== -->
-    <table name="custom_field_parent" namespace="CustomFields\Model">
+    <table name="custom_field_parent">
         <column name="id"    type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="title" type="VARCHAR" size="255"  required="true"/>
     </table>
@@ -34,11 +34,11 @@
     <!-- ===================== -->
     <!-- custom_field           -->
     <!-- ===================== -->
-    <table name="custom_field" namespace="CustomFields\Model">
+    <table name="custom_field">
         <column name="id"    type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="code"  type="VARCHAR" size="100"  required="true"/>
         <column name="title" type="VARCHAR" size="255"  required="true"/>
-        <column name="type"  type="ENUM"    valueSet="text,textarea, wysiwyg, content, category, folder, product" required="true" default="text"/>
+        <column name="type"  type="ENUM"    valueSet="text,textarea, wysiwyg, content, category, folder, product, image" required="true" default="text"/>
         <column name="custom_field_parent_id" type="INTEGER" required="false"/>
 
         <foreign-key foreignTable="custom_field_parent" onDelete="SET NULL" onUpdate="CASCADE">
@@ -53,7 +53,7 @@
     <!-- ===================== -->
     <!-- custom_field_source    -->
     <!-- ===================== -->
-    <table name="custom_field_source" namespace="CustomFields\Model">
+    <table name="custom_field_source">
         <column name="custom_field_id" type="INTEGER" required="true" primaryKey="true"/>
         <column name="source"          type="VARCHAR" size="100" required="true" primaryKey="true"/>
         <!-- ex: content, product, ... -->
@@ -63,10 +63,11 @@
         </foreign-key>
     </table>
 
+
     <!-- ===================== -->
     <!-- custom_field_value     -->
     <!-- ===================== -->
-    <table name="custom_field_value" namespace="CustomFields\Model">
+    <table name="custom_field_value">
         <column name="id"              type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="custom_field_id" type="INTEGER" required="true"/>
         <column name="source"          type="VARCHAR" size="100" required="true"/>
@@ -96,5 +97,21 @@
             <parameter name="i18n_columns" value="value" />
         </behavior>
     </table>
+
+    <!-- ===================== -->
+    <!-- custom_field_image           -->
+    <!-- ===================== -->
+    <table name="custom_field_image">
+        <column autoIncrement="true" name="id" primaryKey="true" required="true" type="INTEGER" />
+        <column name="custom_field_value_id" type="INTEGER" />
+
+        <column name="file" required="true" size="255" type="VARCHAR" />
+        <behavior name="timestampable" />
+        <foreign-key foreignTable="custom_field_value" onDelete="CASCADE" onUpdate="RESTRICT">
+            <reference foreign="id" local="custom_field_value_id" />
+        </foreign-key>
+
+    </table>
+
     <external-schema filename="vendor/thelia/config/schema.xml" referenceOnly="true"/>
 </database>

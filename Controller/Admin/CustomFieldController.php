@@ -56,6 +56,7 @@ final class CustomFieldController extends BaseAdminController
 
 
         $generalValues = [];
+        $generalValueIds = [];
         $editLanguageId = (int) $this->getRequest()->query->get('edit_language_id', $this->getSession()->getLang()->getId());
 
         $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
@@ -76,11 +77,14 @@ final class CustomFieldController extends BaseAdminController
 
             if ($value && in_array($customField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)) {
                 $generalValues[$customField->getId()] = $value->getSimpleValue() ?? '';
+                $generalValueIds[$customField->getId()] = $value->getId();
             } elseif ($value) {
                 $value->setLocale($locale);
                 $generalValues[$customField->getId()] = $value->getValue();
+                $generalValueIds[$customField->getId()] = $value->getId();
             } else {
                 $generalValues[$customField->getId()] = '';
+                $generalValueIds[$customField->getId()] = null;
             }
         }
 
@@ -93,6 +97,7 @@ final class CustomFieldController extends BaseAdminController
             'general_custom_fields' => $generalCustomFields,
             'grouped_general_fields' => $groupedGeneralFields,
             'general_values' => $generalValues,
+            'general_value_ids' => $generalValueIds,
             'edit_language_id' => $editLanguageId,
         ]);
     }

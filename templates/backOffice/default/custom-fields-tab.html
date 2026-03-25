@@ -4,7 +4,7 @@
         <form
                 method="POST"
                 action="{url path='/admin/module/customfields/values/save'}"
-                {form_enctype}
+                enctype="multipart/form-data"
                 class="clearfix"
         >
 
@@ -47,4 +47,30 @@
     {/form}
     {hook name="wysiwyg.js" location="wysiwyg-customfields-edit-js" }
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form[action*="customfields/values/save"]');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Remove empty file inputs before submit to avoid Symfony FileBag error
+                const fileInputs = form.querySelectorAll('input[type="file"]');
+                fileInputs.forEach(function(input) {
+                    if (!input.files || input.files.length === 0 || input.files[0].size === 0) {
+                        input.removeAttribute('name');
+                    }
+                });
+            });
+        }
+
+        // Handle delete image confirmation
+        document.querySelectorAll('.delete-custom-field-image').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                const confirmMessage = this.getAttribute('data-confirm');
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+    </script>
 </div>

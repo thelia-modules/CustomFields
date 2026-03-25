@@ -2,6 +2,8 @@
 
 namespace CustomFields\Twig;
 
+use CustomFields\Model\CustomFieldImage;
+use CustomFields\Model\CustomFieldImageQuery;
 use CustomFields\Service\CustomFieldService;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
@@ -18,6 +20,7 @@ class CustomFieldsTwigExtension extends AbstractExtension
     {
         return [
             new TwigFunction('custom_field_value', [$this, 'getCustomFieldValue']),
+            new TwigFunction('custom_field_image', [$this, 'getCustomFieldImage']),
         ];
     }
 

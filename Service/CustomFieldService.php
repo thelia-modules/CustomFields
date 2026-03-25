@@ -7,6 +7,7 @@ namespace CustomFields\Service;
 use CustomFields\Controller\Admin\CustomFieldValueController;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
+use CustomFields\Model\Map\CustomFieldTableMap;
 use Thelia\Model\LangQuery;
 
 class CustomFieldService
@@ -21,7 +22,7 @@ class CustomFieldService
      *
      * @return string|null The custom field value or null if not found
      */
-    public function getCustomFieldValue(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): ?string
+    public function getCustomFieldValue(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): string|int|null
     {
         // Get the custom field by code
         $customField = CustomFieldQuery::create()
@@ -62,6 +63,9 @@ class CustomFieldService
         if (in_array($customField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)) {
             return $customFieldValue->getSimpleValue();
         }
+        if ($customField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
+            return $customFieldValue->getCustomFieldImages()->getFirst()->getId();
+        }
 
         // Set locale if provided
         if (null !== $locale) {
@@ -91,4 +95,5 @@ class CustomFieldService
 
         return $this->getCustomFieldValue($code, $source, $sourceId, $lang->getLocale());
     }
+
 }

@@ -77,6 +77,7 @@ final class CustomFieldForm extends BaseForm
                         Translator::getInstance()->trans('Category', [], 'customfields') => CustomFieldTableMap::COL_TYPE_CATEGORY,
                         Translator::getInstance()->trans('Folder', [], 'customfields') => CustomFieldTableMap::COL_TYPE_FOLDER,
                         Translator::getInstance()->trans('Product', [], 'customfields') => CustomFieldTableMap::COL_TYPE_PRODUCT,
+                        Translator::getInstance()->trans('Image', [], 'customfields') => CustomFieldTableMap::COL_TYPE_IMAGE,
                     ],
                     'label' => Translator::getInstance()->trans('Type', [], 'customfields'),
                     'label_attr' => ['for' => 'custom_field_type'],
