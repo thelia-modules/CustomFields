@@ -10,6 +10,7 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Thelia\Core\Translation\Translator;
 use Thelia\Form\BaseForm;
 
@@ -82,6 +83,15 @@ final class CustomFieldForm extends BaseForm
                     'label' => Translator::getInstance()->trans('Type', [], 'customfields'),
                     'label_attr' => ['for' => 'custom_field_type'],
                     'required' => true,
+                ]
+            )
+            ->add(
+                'is_international',
+                CheckboxType::class,
+                [
+                    'label' => Translator::getInstance()->trans('International', [], 'customfields'),
+                    'label_attr' => ['for' => 'custom_field_is_international'],
+                    'required' => false,
                 ]
             )
             ->add(

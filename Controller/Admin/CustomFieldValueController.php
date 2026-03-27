@@ -131,7 +131,10 @@ final class CustomFieldValueController extends BaseAdminController
                             ->filterBySourceId($sourceId)
                             ->findOneOrCreate();
 
-                        if (in_array($customField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES)) {
+                        if (
+                            in_array($customField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES) ||
+                            !$customField->isInternational()
+                        ) {
                             $customFieldValue
                                 ->setSimpleValue($value)
                                 ->save();

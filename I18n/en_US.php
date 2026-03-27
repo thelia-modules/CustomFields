@@ -83,4 +83,6 @@ return [
     'Select a parent group to organize this field' => 'Select a parent group to organize this field',
     'Or create new parent' => 'Or create new parent',
     'Enter a new parent group name' => 'Enter a new parent group name',
+    'International' => 'International',
+    'Check to allow translation of the field' => 'Check to allow translation of the field'
 ];

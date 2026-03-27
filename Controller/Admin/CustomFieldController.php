@@ -75,7 +75,11 @@ final class CustomFieldController extends BaseAdminController
                 ->filterBySource('general')
                 ->findOne();
 
-            if ($value && in_array($customField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)) {
+            if (
+                $value &&
+                (in_array($customField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)
+                || !$customField->getIsInternational())
+            ) {
                 $generalValues[$customField->getId()] = $value->getSimpleValue() ?? '';
                 $generalValueIds[$customField->getId()] = $value->getId();
             } elseif ($value) {
@@ -112,7 +116,9 @@ final class CustomFieldController extends BaseAdminController
         // Get all parents for the dropdown
         $parents = CustomFieldParentQuery::create()->find();
 
-        $form = $this->createForm(CustomFieldForm::getName());
+        $form = $this->createForm(CustomFieldForm::getName(), FormType::class, [
+            'is_international' => true,
+        ]);
         $this->getParserContext()->addForm($form);
         $error = null;
 
@@ -176,6 +182,7 @@ final class CustomFieldController extends BaseAdminController
             'title' => $customField->getTitle(),
             'code' => $customField->getCode(),
             'type' => $customField->getType(),
+            'is_international' => $customField->getIsInternational(),
             'sources' => $sourcesArray,
             'custom_field_parent_id' => $customField->getCustomFieldParentId(),
         ]);
@@ -228,6 +235,7 @@ final class CustomFieldController extends BaseAdminController
             ->setTitle($validatedForm->get('title')->getData())
             ->setCode($validatedForm->get('code')->getData())
             ->setType($validatedForm->get('type')->getData())
+            ->setIsInternational($validatedForm->get('is_international')->getData())
             ->setCustomFieldParentId($parentId ?: null)
             ->save();
 

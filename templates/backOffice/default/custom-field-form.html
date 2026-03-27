@@ -23,7 +23,7 @@
                 method="POST"
                 action="{if $custom_field}{url path='/admin/module/customfields/update/%id' id=$custom_field->getId()}{else}{url path='/admin/module/customfields/create'}{/if}"
                 {form_enctype}
-                class="clearfix"
+                class="clearfix customfield-form"
             >
                 {form_hidden_fields}
 
@@ -118,6 +118,32 @@
                                         {/if}
                                     {/form_field}
                                 </div>
+                                {* International Field *}
+                                <div class="form-group">
+                                    {form_field field="is_international"}
+                                        <label for="{$label_attr.for}" class="control-label" style="display: flex; align-items: center; gap: 10px;">
+                                            {$label}
+                                            {if $required}<span class="required">*</span>{/if}
+                                            <input
+                                                    type="checkbox"
+                                                    id="{$label_attr.for}"
+                                                    name="{$name}"
+                                                    value="1"
+                                                    {if $checked}checked{/if}
+                                                    {if $required}required{/if}
+                                                    style="margin: 0;"
+                                            />
+                                        </label>
+
+                                    {if $error}
+                                        <span class="help-block">{$error}</span>
+                                    {/if}
+                                        <span class="help-block">
+                                            {intl l="Check to allow translation of the field" d="customfields"}
+                                        </span>
+                                    {/form_field}
+                                </div>
+
 
                                 {* Sources field *}
                                 <div class="form-group">
@@ -212,4 +238,27 @@
             </form>
         {/form}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const noInternational = ['content', 'category', 'folder', 'product' , 'image'];
+            const isInternational = document.querySelector('#custom_field_is_international');
+            const type = document.querySelector('#custom_field_type');
+            console.log(noInternational);
+
+            if (isInternational && type) {
+                type.addEventListener('input', function(e) {
+                    console.log(type.value);
+                    if (noInternational.includes(type.value)) {
+                        isInternational.checked = false;
+                        isInternational.disabled = true;
+                    } else {
+                        isInternational.disabled = false;
+                    }
+                });
+            }
+
+        });
+    </script>
+
 {/block}

@@ -38,6 +38,7 @@
         <column name="id"    type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="code"  type="VARCHAR" size="100"  required="true"/>
         <column name="title" type="VARCHAR" size="255"  required="true"/>
+        <column name="is_international" type="BOOLEAN" required="true" default="true"/>
         <column name="type"  type="ENUM"    valueSet="text,textarea, wysiwyg, content, category, folder, product, image" required="true" default="text"/>
         <column name="custom_field_parent_id" type="INTEGER" required="false"/>
 

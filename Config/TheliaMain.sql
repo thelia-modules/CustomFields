@@ -27,6 +27,7 @@ CREATE TABLE `custom_field`
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `code` VARCHAR(100) NOT NULL,
     `title` VARCHAR(255) NOT NULL,
+    `is_international` TINYINT(1) DEFAULT 1 NOT NULL,
     `type` TINYINT DEFAULT 0 NOT NULL,
     `custom_field_parent_id` INTEGER,
     PRIMARY KEY (`id`),
