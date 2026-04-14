@@ -24,7 +24,7 @@ class CustomFieldsPlugin extends AbstractSmartyPlugin
     public function getCustomFieldValue(array $params, \Smarty_Internal_Template $smarty) {
         $code = $params['code'];
         $source = $params['source'] ?? 'general';
-        $sourceId = $params['source_id'] ? (int) $params['source_id'] : null;
+        $sourceId = isset($params['source_id']) ? (int) $params['source_id'] : null;
         $locale = $params['locale'] ?? null;
         // If no locale provided, use current session locale
         if ($locale === null) {
