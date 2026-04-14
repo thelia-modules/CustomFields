@@ -60,14 +60,16 @@ class CustomFieldService
             return null;
         }
 
+
+        if ($customField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
+            return $customFieldValue->getCustomFieldImages()->getFirst()->getId();
+        }
+
         if (
             in_array($customField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)
             || !$customField->isInternational()
         ) {
             return $customFieldValue->getSimpleValue();
-        }
-        if ($customField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
-            return $customFieldValue->getCustomFieldImages()->getFirst()->getId();
         }
 
         // Set locale if provided

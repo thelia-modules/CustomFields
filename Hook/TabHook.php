@@ -9,7 +9,8 @@ use CustomFields\Service\CustomFieldSortingService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Hook\BaseHook;
-use Thelia\Core\Template\Parser\ParserResolver;
+use Thelia\Core\Template\Assets\AssetResolverInterface;
+use TheliaSmarty\Template\SmartyParser;
 use Thelia\Model\Category;
 use Thelia\Model\CategoryQuery;
 use Thelia\Model\Content;
@@ -24,10 +25,11 @@ class TabHook extends BaseHook
 {
     public function __construct(
         ?EventDispatcherInterface $dispatcher = null,
-        ?ParserResolver $parserResolver = null,
+        ?SmartyParser $parser = null,
+        ?AssetResolverInterface $resolver = null,
         private readonly CustomFieldSortingService $sortingService
     ) {
-        parent::__construct($dispatcher, $parserResolver);
+        parent::__construct($parser,$resolver, $dispatcher);
     }
 
     public function onProductTab(HookRenderBlockEvent $event): void

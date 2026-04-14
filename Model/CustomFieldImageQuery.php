@@ -21,7 +21,7 @@ class CustomFieldImageQuery extends BaseCustomFieldImageQuery
     {
         return $this;
     }
-    public function orderBy(string $columnName, string $order = Criteria::ASC)
+    public function orderBy($columnName, $order = Criteria::ASC)
     {
         if ($columnName === 'Position') {
             return $this;

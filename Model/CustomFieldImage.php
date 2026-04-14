@@ -5,8 +5,8 @@ namespace CustomFields\Model;
 use CustomFields\CustomFields;
 use CustomFields\Model\Base\CustomFieldImage as BaseCustomFieldImage;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
-use Thelia\Core\File\FileModelInterface;
-use Thelia\Core\File\FileModelParentInterface;
+use Thelia\Files\FileModelInterface;
+use Thelia\Files\FileModelParentInterface;
 
 /**
  * Skeleton subclass for representing a row from the 'custom_field_image' table.
@@ -30,7 +30,7 @@ class CustomFieldImage extends BaseCustomFieldImage implements FileModelInterfac
         return $this->getCustomFieldValueId();
     }
 
-    public function getParentFileModel(): FileModelParentInterface
+    public function getParentFileModel(): CustomFieldImage
     {
         return new static();
     }
@@ -60,7 +60,7 @@ class CustomFieldImage extends BaseCustomFieldImage implements FileModelInterfac
         return parent::getFile() ?? '';
     }
 
-    public function setTitle(string $title)
+    public function setTitle($title)
     {
         // TODO: Implement setTitle() method.
     }
@@ -70,27 +70,27 @@ class CustomFieldImage extends BaseCustomFieldImage implements FileModelInterfac
         return null;
     }
 
-    public function setChapo(string $chapo)
+    public function setChapo($chapo)
     {
         // TODO: Implement setChapo() method.
     }
 
-    public function setDescription(string $description)
+    public function setDescription($description)
     {
         // TODO: Implement setDescription() method.
     }
 
-    public function setPostscriptum(string $postscriptum)
+    public function setPostscriptum($postscriptum)
     {
         // TODO: Implement setPostscriptum() method.
     }
 
-    public function setLocale(string $locale)
+    public function setLocale($locale)
     {
         // TODO: Implement setLocale() method.
     }
 
-    public function setVisible(bool $visible)
+    public function setVisible($visible)
     {
         // TODO: Implement setVisible() method.
     }

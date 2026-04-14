@@ -102,10 +102,10 @@
     {/if}
     {$codeSource = ""}
     {if $source != 'general'}
-        {$codeSource = ", '"|cat:$source|cat:"', source_id "}
+        {$codeSource = ' source="'|cat:$source|cat:'" source_id="sourceId"'}
     {/if}
-    {$code = '{{ custom_field_value(\''|cat:$custom_field->getCode()|cat:'\') }}'}
+    {$code = '{custom_field_value code="'|cat:$custom_field->getCode()|cat:'"}'}
     <span class="help-block">
-        {intl l="Code: %code" code='{{ custom_field_value(\''|cat:$custom_field->getCode()|cat:'\''|cat:$codeSource|cat:') }}' d="customfields"}
+        {intl l="Code: %code" code='{custom_field_value code="'|cat:$custom_field->getCode()|cat:'"'|cat:$codeSource|cat:'}' d="customfields"}
     </span>
 </div>
