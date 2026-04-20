@@ -1,0 +1,120 @@
+{extends file="admin-layout.tpl"}
+
+{block name="no-return-functions"}
+    {$admin_current_location = 'option_pages'}
+{/block}
+
+{block name="page-title"}{$option_page->getTitle()}{/block}
+
+{block name="check-resource"}admin.module{/block}
+{block name="check-access"}view{/block}
+
+{block name="main-content"}
+
+    {if isset($smarty.get.success) && !empty($smarty.get.success)}
+        <div class="alert alert-success">
+            {$smarty.get.success}
+        </div>
+    {/if}
+
+    {if isset($smarty.get.error) && !empty($smarty.get.error)}
+        <div class="alert alert-danger">
+            {$smarty.get.error}
+        </div>
+    {/if}
+
+    <div class="general-block-decorator">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="page-header">
+                    <h2>
+                        <i class="fas fa-file-alt"></i>
+                        {$option_page->getTitle()}
+                        <small><code>{$option_page->getCode()}</code></small>
+                    </h2>
+                </div>
+
+                {if $custom_fields|@count > 0}
+                    <div class="form-container">
+                        {form name="customfields_form_custom_field_value"}
+                            <form
+                                method="POST"
+                                action="{url path='/admin/module/customfields/values/save'}"
+                                enctype="multipart/form-data"
+                                class="clearfix"
+                            >
+                                {form_field field="source_id"}
+                                    <input type="hidden" name="{$name}" value="{$option_page->getId()}" />
+                                {/form_field}
+
+                                {form_field field="source"}
+                                    <input type="hidden" name="{$name}" value="{$source}" />
+                                {/form_field}
+
+                                <input type="hidden" name="edit_language_id" value="{$edit_language_id}" />
+
+                                {form_hidden_fields}
+
+                                {* Language toolbar *}
+                                {include file="includes/inner-form-toolbar.html"
+                                    hide_flags=false
+                                    hide_submit_buttons=false
+                                    page_url="/admin/module/customfields/option-pages/view/{$option_page->getId()}"
+                                }
+
+                                {include file="./includes/fields-list.html"
+                                    grouped_fields=$grouped_fields
+                                    values=$values
+                                    value_ids=$value_ids
+                                    source=$source
+                                }
+
+                                {* Bottom toolbar *}
+                                {include file="includes/inner-form-toolbar.html"
+                                    hide_flags=false
+                                    hide_submit_buttons=false
+                                    page_url="/admin/module/customfields/option-pages/view/{$option_page->getId()}"
+                                    page_bottom=true
+                                }
+                            </form>
+                        {/form}
+                        {hook name="wysiwyg.js" location="wysiwyg-customfields-optionpage-js" }
+
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const form = document.querySelector('form[action*="customfields/values/save"]');
+                            if (form) {
+                                form.addEventListener('submit', function(e) {
+                                    const fileInputs = form.querySelectorAll('input[type="file"]');
+                                    fileInputs.forEach(function(input) {
+                                        if (!input.files || input.files.length === 0 || input.files[0].size === 0) {
+                                            input.removeAttribute('name');
+                                        }
+                                    });
+                                });
+                            }
+
+                            document.querySelectorAll('.delete-custom-field-image').forEach(function(link) {
+                                link.addEventListener('click', function(e) {
+                                    const confirmMessage = this.getAttribute('data-confirm');
+                                    if (!confirm(confirmMessage)) {
+                                        e.preventDefault();
+                                    }
+                                });
+                            });
+                        });
+                        </script>
+                    </div>
+                {else}
+                    <div class="alert alert-info">
+                        {intl l="No custom fields assigned to this option page. Create custom fields with the source '%source' first." d="customfields" source={$source}}
+                    </div>
+                {/if}
+
+                <a href="{url path='/admin/module/customfields/list' current_tab='option_pages'}" class="btn btn-default" style="margin-top: 15px;">
+                    <i class="fas fa-arrow-left"></i> {intl l="Back to Custom Fields" d="customfields"}
+                </a>
+            </div>
+        </div>
+    </div>
+{/block}

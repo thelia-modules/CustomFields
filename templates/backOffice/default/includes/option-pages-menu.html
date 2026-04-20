@@ -1,0 +1,17 @@
+<li class="{if $admin_current_location == 'option_pages'}active{/if}" id="option_pages_menu">
+    <a title="{intl l="Option Pages" d="customfields"}" href="#collapse-option-pages" {if $admin_current_location == 'option_pages'}class="open"{/if}>
+        <i class="fas fa-file-alt"></i>
+        <span class="item-text">{intl l="Option Pages" d="customfields"}</span>
+        <i class="fas fa-chevron-right menu-collapse"></i>
+    </a>
+
+    <ul id="collapse-option-pages" class="collapse {if $admin_current_location == 'option_pages'}in{/if}" role="menu">
+        {foreach from=$option_pages item=page}
+            <li role="menuitem">
+                <a href="{url path="/admin/module/customfields/option-pages/view/{$page->getId()}"}">
+                    {$page->getTitle()}
+                </a>
+            </li>
+        {/foreach}
+    </ul>
+</li>

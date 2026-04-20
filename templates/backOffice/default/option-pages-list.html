@@ -1,0 +1,108 @@
+{extends file="admin-layout.tpl"}
+
+{block name="no-return-functions"}
+    {$admin_current_location = 'option_pages'}
+{/block}
+
+{block name="page-title"}{intl l='Option Pages' d="customfields"}{/block}
+
+{block name="check-resource"}admin.module{/block}
+{block name="check-access"}view{/block}
+
+{block name="main-content"}
+
+    {if isset($smarty.get.success) && !empty($smarty.get.success)}
+        <div class="alert alert-success">
+            {$smarty.get.success}
+        </div>
+    {/if}
+
+    {if isset($smarty.get.error) && !empty($smarty.get.error)}
+        <div class="alert alert-danger">
+            {$smarty.get.error}
+        </div>
+    {/if}
+
+    <div class="general-block-decorator">
+        <div class="row">
+            <div class="col-md-8">
+                <h3>{intl l="Option Pages" d="customfields"}</h3>
+
+                {if $option_pages|@count > 0}
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>{intl l="ID"}</th>
+                                <th>{intl l="Title"}</th>
+                                <th>{intl l="Code"}</th>
+                                <th>{intl l="Actions"}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {foreach from=$option_pages item=page}
+                                <tr>
+                                    <td>{$page->getId()}</td>
+                                    <td>
+                                        <a href="{url path="/admin/module/customfields/option-pages/view/{$page->getId()}"}">
+                                            {$page->getTitle()}
+                                        </a>
+                                    </td>
+                                    <td><code>{$page->getCode()}</code></td>
+                                    <td>
+                                        <a href="{url path="/admin/module/customfields/option-pages/view/{$page->getId()}"}" class="btn btn-sm btn-primary" title="{intl l="View"}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{url path="/admin/module/customfields/option-pages/delete/{$page->getId()}"}"
+                                           class="btn btn-sm btn-danger"
+                                           title="{intl l="Delete"}"
+                                           onclick="return confirm('{intl l="Are you sure you want to delete this option page?" d="customfields"}');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {/foreach}
+                        </tbody>
+                    </table>
+                {else}
+                    <div class="alert alert-info">
+                        {intl l="No option pages created yet." d="customfields"}
+                    </div>
+                {/if}
+            </div>
+
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{intl l="Create an Option Page" d="customfields"}</h3>
+                    </div>
+                    <div class="panel-body">
+                        {form name="customfields_form_option_page"}
+                            <form action="{url path='/admin/module/customfields/option-pages/create'}" method="POST">
+                                {form_hidden_fields}
+
+                                <div class="form-group">
+                                    {form_field field="title"}
+                                        <label for="{$label_attr.for}">{$label}</label>
+                                        <input type="text" class="form-control" id="{$label_attr.for}" name="{$name}" required placeholder="{intl l="Page title" d="customfields"}" value="{$value}">
+                                    {/form_field}
+                                </div>
+
+                                <div class="form-group">
+                                    {form_field field="code"}
+                                        <label for="{$label_attr.for}">{$label}</label>
+                                        <input type="text" class="form-control" id="{$label_attr.for}" name="{$name}" required placeholder="{intl l="unique_code" d="customfields"}" pattern="[a-z0-9_]+" value="{$value}">
+                                        <p class="help-block">{intl l="Lowercase letters, numbers and underscores only" d="customfields"}</p>
+                                    {/form_field}
+                                </div>
+
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> {intl l="Create" d="customfields"}
+                                </button>
+                            </form>
+                        {/form}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}
