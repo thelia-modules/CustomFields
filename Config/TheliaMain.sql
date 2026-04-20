@@ -121,5 +121,22 @@ CREATE TABLE `custom_field_value_i18n`
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- ---------------------------------------------------------------------
+-- custom_field_option_page
+-- ---------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `custom_field_option_page`;
+
+CREATE TABLE `custom_field_option_page`
+(
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `title` VARCHAR(255) NOT NULL,
+    `code` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `custom_field_option_page_u_code` (`code`)
+) ENGINE=InnoDB;
+
 # This restores the fkey checks, after having unset them earlier
 SET FOREIGN_KEY_CHECKS = 1;

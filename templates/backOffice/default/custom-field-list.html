@@ -41,6 +41,11 @@
                     {intl l="Import / Export" d="customfields"}
                 </a>
             </li>
+            <li role="presentation" class="{if $current_tab == 'option_pages'}active{/if}">
+                <a href="#option_pages" aria-controls="option_pages" role="tab" data-toggle="tab">
+                    <i class="fas fa-file-alt"></i> {intl l="Option Pages" d="customfields"}
+                </a>
+            </li>
         </ul>
 
         {* Tab Content *}
@@ -63,11 +68,20 @@
                 </div>
             </div>
 
-            {* General Values Tab *}
+            {* Import / Export Tab *}
             <div role="tabpanel" class="tab-pane {if $current_tab == 'import'}active{/if}" id="import">
                 <div class="row">
                     <div class="col-md-12">
                         {include file="custom-fields-import.html"}
+                    </div>
+                </div>
+            </div>
+
+            {* Option Pages Tab *}
+            <div role="tabpanel" class="tab-pane {if $current_tab == 'option_pages'}active{/if}" id="option_pages">
+                <div class="row">
+                    <div class="col-md-12">
+                        {include file="custom-fields-option-pages.html"}
                     </div>
                 </div>
             </div>

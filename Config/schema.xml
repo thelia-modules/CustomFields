@@ -114,5 +114,15 @@
 
     </table>
 
+    <table name="custom_field_option_page">
+        <column name="id"    type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="title" type="VARCHAR" size="255" required="true"/>
+        <column name="code"  type="VARCHAR" size="100" required="true"/>
+        <behavior name="timestampable" />
+        <unique>
+            <unique-column name="code"/>
+        </unique>
+    </table>
+
     <external-schema filename="vendor/thelia/config/schema.xml" referenceOnly="true"/>
 </database>

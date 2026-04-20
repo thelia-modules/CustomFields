@@ -7,6 +7,7 @@ namespace CustomFields\Controller\Admin;
 use CustomFields\Form\CustomFieldValueForm;
 use CustomFields\Model\CustomFieldImage;
 use CustomFields\Model\CustomFieldImageQuery;
+use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Model\Map\CustomFieldTableMap;
@@ -49,7 +50,7 @@ final class CustomFieldValueController extends BaseAdminController
             $validatedForm = $this->validateForm($form);
 
             $source = $validatedForm->get('source')->getData();
-            $sourceId = $source === 'general' ? null : (int) $validatedForm->get('source_id')->getData();
+            $sourceId = ($source === 'general' || str_starts_with($source, 'option_page_')) ? null : (int) $validatedForm->get('source_id')->getData();
             $editLanguageId = (int) $this->getRequest()->request->get('edit_language_id', $this->getSession()->getLang()->getId());
             $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
 
@@ -160,15 +161,32 @@ final class CustomFieldValueController extends BaseAdminController
                 'general' => '/admin/module/customfields/list',
             ];
 
+            // Handle option page sources
+            $isOptionPage = str_starts_with($source, 'option_page_');
+            if ($isOptionPage) {
+                $optionPageCode = substr($source, strlen('option_page_'));
+                $optionPage = CustomFieldOptionPageQuery::create()
+                    ->filterByCode($optionPageCode)
+                    ->findOne();
+
+                if ($optionPage) {
+                    $redirectUrls[$source] = '/admin/module/customfields/option-pages/view/' . $optionPage->getId();
+                }
+            }
+
             if ('close' === $saveMode) {
-                $redirectUrl = match ($source) {
-                    'product' => '/admin/products',
-                    'content' => '/admin/content',
-                    'category' => '/admin/categories',
-                    'folder' => '/admin/folders',
-                    'general' => '/admin/module/customfields/list',
-                    default => '/admin/module/customfields/list',
-                };
+                if ($isOptionPage) {
+                    $redirectUrl = '/admin/module/customfields/list';
+                } else {
+                    $redirectUrl = match ($source) {
+                        'product' => '/admin/products',
+                        'content' => '/admin/content',
+                        'category' => '/admin/categories',
+                        'folder' => '/admin/folders',
+                        'general' => '/admin/module/customfields/list',
+                        default => '/admin/module/customfields/list',
+                    };
+                }
             } else {
                 $redirectUrl = $redirectUrls[$source] ?? '/admin/module/customfields/list';
             }

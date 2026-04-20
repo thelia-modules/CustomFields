@@ -3,7 +3,9 @@
 namespace CustomFields\Hook;
 
 use CustomFields\CustomFields;
+use CustomFields\Model\CustomFieldOptionPageQuery;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
+use Thelia\Core\Event\Hook\HookRenderEvent;
 use Thelia\Core\Hook\BaseHook;
 use Thelia\Tools\URL;
 
@@ -21,6 +23,21 @@ class ConfigurationHook extends BaseHook
         );
     }
 
+    public function onMainInTopMenuItems(HookRenderEvent $event): void
+    {
+        $optionPages = CustomFieldOptionPageQuery::create()->orderByTitle()->find();
+
+        if ($optionPages->count() === 0) {
+            return;
+        }
+
+        $event->add(
+            $this->render('includes/option-pages-menu.html', [
+                'option_pages' => $optionPages,
+            ])
+        );
+    }
+
     public static function getSubscribedHooks(): array
     {
         return [
@@ -28,6 +45,12 @@ class ConfigurationHook extends BaseHook
                 [
                     'type' => 'back',
                     'method' => 'onTopMenuTools',
+                ],
+            ],
+            'main.in-top-menu-items' => [
+                [
+                    'type' => 'back',
+                    'method' => 'onMainInTopMenuItems',
                 ],
             ],
         ];

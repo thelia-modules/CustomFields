@@ -9,6 +9,7 @@ use CustomFields\Form\CustomFieldImportForm;
 use CustomFields\Model\CustomField;
 use CustomFields\Model\CustomFieldParent;
 use CustomFields\Model\CustomFieldParentQuery;
+use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldSource;
 use CustomFields\Model\CustomFieldSourceQuery;
@@ -95,6 +96,9 @@ final class CustomFieldController extends BaseAdminController
         // Group general fields by parent
         $groupedGeneralFields = $this->sortingService->groupByParent($generalCustomFields);
 
+        // Get option pages
+        $optionPages = CustomFieldOptionPageQuery::create()->orderByTitle()->find();
+
         return $this->render('custom-field-list', [
             'custom_fields' => $customFields,
             'current_tab' => $currentTab,
@@ -103,6 +107,7 @@ final class CustomFieldController extends BaseAdminController
             'general_values' => $generalValues,
             'general_value_ids' => $generalValueIds,
             'edit_language_id' => $editLanguageId,
+            'option_pages' => $optionPages,
         ]);
     }
 
