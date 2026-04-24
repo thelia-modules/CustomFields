@@ -217,6 +217,7 @@ class CustomFieldService
             ->filterByCustomFieldId($parentField->getId())
             ->filterBySource($source)
             ->filterBySourceId($sourceId)
+            ->filterByParentRepeaterRowId($parentRowId)
             ->orderByPosition()
             ->find();
 

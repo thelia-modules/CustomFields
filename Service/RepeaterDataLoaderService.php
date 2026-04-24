@@ -77,6 +77,7 @@ class RepeaterDataLoaderService
                 ->filterByCustomFieldId($repeaterId)
                 ->filterBySource($source)
                 ->filterBySourceId($sourceId)
+                ->filterByParentRepeaterRowId($parentRepeaterRowId)
                 ->orderByPosition()
                 ->find();
 
@@ -93,6 +94,7 @@ class RepeaterDataLoaderService
                             ->filterByCustomFieldId($subRepeaterId)
                             ->filterBySource($source)
                             ->filterBySourceId($sourceId)
+                            ->filterByParentRepeaterRowId($rowId)
                             ->orderByPosition()
                             ->find();
 

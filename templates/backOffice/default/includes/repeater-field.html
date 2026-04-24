@@ -204,44 +204,63 @@
             </div>
 
             <script>
-            (function() {
-                var fullFieldId = '{$full_field_id}';
-                var container = document.getElementById(fullFieldId);
+            (() => {
+                const fullFieldId = '{$full_field_id}';
+                const container = document.getElementById(fullFieldId);
                 if (!container) return;
 
-                var rowsContainer = document.getElementById(fullFieldId + '_rows_container');
-                var rowCountInput = container.querySelector('.acf-row-count');
-                var templateEl = document.getElementById(fullFieldId + '_template');
+                const rowsContainer = document.getElementById(fullFieldId + '_rows_container');
+                const rowCountInput = container.querySelector('.acf-row-count');
+                const templateEl = document.getElementById(fullFieldId + '_template');
 
-                function getRowCount() {
+                const getRowCount = () => {
                     return rowsContainer.querySelectorAll(':scope > .acf-row').length;
-                }
+                };
 
-                function updateRowNumbers() {
-                    var rows = rowsContainer.querySelectorAll(':scope > .acf-row');
-                    rows.forEach(function(row, index) {
+                const updateRowNumbers = () => {
+                    const rows = rowsContainer.querySelectorAll(':scope > .acf-row');
+                    rows.forEach((row, index) => {
                         row.dataset.rowIndex = index;
-                        var label = row.querySelector(':scope > .acf-row-header .acf-row-number');
+                        const label = row.querySelector(':scope > .acf-row-header .acf-row-number');
                         if (label) {
-                            var baseText = label.textContent.replace(/\d+$/, '');
+                            const baseText = label.textContent.replace(/\d+$/, '');
                             label.textContent = baseText + (index + 1);
                         }
 
-                        row.querySelectorAll(':scope > .acf-row-body > input[name], :scope > .acf-row-body > .form-group > input[name], :scope > .acf-row-body > .form-group > textarea[name], :scope > .acf-row-body > .form-group > div > input[name]').forEach(function(el) {
-                            var isRowId = el.classList.contains('acf-row-id-input');
-                            var savedValue = isRowId ? el.value : null;
+                        // Mettre à jour le champ row_id en premier (celui juste après .acf-row-body)
+                        const rowIdInput = row.querySelector(':scope > .acf-row-body > .acf-row-id-input');
+                        if (rowIdInput) {
+                            const savedRowId = rowIdInput.value;
+                            const pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_row_id)');
+                            rowIdInput.name = rowIdInput.name.replace(pattern, '$1' + index + '$2');
+                            rowIdInput.value = savedRowId;
+                        }
 
-                            var pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
-                            el.name = el.name.replace(pattern, '$1' + index + '$2');
+                        // Mettre à jour TOUS les champs de la ligne (y compris ceux des sous-repeaters)
+                        row.querySelectorAll(':scope > .acf-row-body input[name], :scope > .acf-row-body textarea[name]').forEach((el) => {
+                            // Skip le row_id qu'on a déjà traité
+                            if (el === rowIdInput) {
+                                return;
+                            }
 
-                            if (isRowId && savedValue !== null) el.value = savedValue;
+                            // Remplacer le premier chiffre après fullFieldId par le nouvel index
+                            const pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
+
+                            // Si c'est un champ row_id d'un sous-repeater, préserver sa valeur
+                            if (el.classList.contains('acf-row-id-input')) {
+                                const savedValue = el.value;
+                                el.name = el.name.replace(pattern, '$1' + index + '$2');
+                                el.value = savedValue;
+                            } else {
+                                el.name = el.name.replace(pattern, '$1' + index + '$2');
+                            }
                         });
                     });
                     rowCountInput.value = rows.length;
-                }
+                };
 
                 // Initialize drag & drop with Sortable
-                function initSortable() {
+                const initSortable = () => {
                     if (window.Sortable && rowsContainer) {
                         new Sortable(rowsContainer, {
                             animation: 150,
@@ -249,18 +268,18 @@
                             ghostClass: 'acf-row-sortable-ghost',
                             chosenClass: 'acf-row-sortable-chosen',
                             dragClass: 'acf-row-sortable-drag',
-                            onEnd: function() {
+                            onEnd: () => {
                                 updateRowNumbers();
                             }
                         });
                     }
-                }
+                };
 
                 // Wait for Sortable.js to load
                 if (window.Sortable) {
                     initSortable();
                 } else {
-                    var checkSortable = setInterval(function() {
+                    const checkSortable = setInterval(() => {
                         if (window.Sortable) {
                             clearInterval(checkSortable);
                             initSortable();
@@ -268,66 +287,54 @@
                     }, 100);
                 }
 
-                // Wait for Sortable.js to load
-                if (window.Sortable) {
-                    initSortable();
-                } else {
-                    var checkSortable = setInterval(function() {
-                        if (window.Sortable) {
-                            clearInterval(checkSortable);
-                            initSortable();
-                        }
-                    }, 100);
-                }
-
-                function bindRowEvents(row) {
-                    var header = row.querySelector(':scope > .acf-row-header');
-                    var body = row.querySelector(':scope > .acf-row-body');
-                    var toggleBtn = row.querySelector(':scope > .acf-row-header .acf-row-toggle');
-                    var removeBtn = row.querySelector(':scope > .acf-row-header .acf-remove-row');
+                const bindRowEvents = (row) => {
+                    const header = row.querySelector(':scope > .acf-row-header');
+                    const body = row.querySelector(':scope > .acf-row-body');
+                    const toggleBtn = row.querySelector(':scope > .acf-row-header .acf-row-toggle');
+                    const removeBtn = row.querySelector(':scope > .acf-row-header .acf-remove-row');
 
                     if (!header || !removeBtn) return;
 
-                    header.addEventListener('click', function(e) {
+                    header.addEventListener('click', (e) => {
                         if (e.target.closest('.acf-remove-row') || e.target.closest('.acf-row-toggle')) return;
-                        var isOpen = body.style.display !== 'none';
+                        const isOpen = body.style.display !== 'none';
                         body.style.display = isOpen ? 'none' : '';
-                        var icon = toggleBtn ? toggleBtn.querySelector('.glyphicon') : null;
+                        const icon = toggleBtn ? toggleBtn.querySelector('.glyphicon') : null;
                         if (icon) {
                             icon.className = isOpen ? 'glyphicon glyphicon-chevron-down' : 'glyphicon glyphicon-chevron-up';
                         }
                     });
 
-                    removeBtn.addEventListener('click', function(e) {
+                    removeBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         if (confirm('{intl l="Supprimer cette ligne ?" d="customfields"}')) {
                             row.remove();
                             updateRowNumbers();
-                            var noRows = rowsContainer.querySelector('.acf-no-rows');
+                            const noRows = rowsContainer.querySelector('.acf-no-rows');
                             if (noRows) noRows.style.display = getRowCount() === 0 ? '' : 'none';
                         }
                     });
-                }
+                };
 
                 rowsContainer.querySelectorAll(':scope > .acf-row').forEach(bindRowEvents);
 
-                var addBtn = container.querySelector('.acf-add-row[data-repeater-full-id="' + fullFieldId + '"]');
+                const addBtn = container.querySelector('.acf-add-row[data-repeater-full-id="' + fullFieldId + '"]');
                 if (addBtn) {
-                    addBtn.addEventListener('click', function() {
+                    addBtn.addEventListener('click', () => {
                         if (!templateEl || !templateEl.content) return;
 
-                        var clone = document.importNode(templateEl.content.querySelector('.acf-row'), true);
-                        var newIndex = getRowCount();
+                        const clone = document.importNode(templateEl.content.querySelector('.acf-row'), true);
+                        const newIndex = getRowCount();
 
                         clone.dataset.rowIndex = newIndex;
-                        var label = clone.querySelector('.acf-row-number');
+                        const label = clone.querySelector('.acf-row-number');
                         if (label) {
-                            var baseText = label.textContent.replace(/\d+$/, '');
+                            const baseText = label.textContent.replace(/\d+$/, '');
                             label.textContent = baseText + (newIndex + 1);
                         }
 
-                        clone.querySelectorAll('[name]').forEach(function(el) {
-                            var pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
+                        clone.querySelectorAll('[name]').forEach((el) => {
+                            const pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
                             el.name = el.name.replace(pattern, '$1' + newIndex + '$2');
 
                             if (el.classList.contains('acf-row-id-input')) {
@@ -343,7 +350,7 @@
                         bindRowEvents(clone);
                         rowCountInput.value = getRowCount();
 
-                        var noRows = rowsContainer.querySelector('.acf-no-rows');
+                        const noRows = rowsContainer.querySelector('.acf-no-rows');
                         if (noRows) noRows.style.display = 'none';
                     });
                 }

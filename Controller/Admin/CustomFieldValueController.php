@@ -75,93 +75,9 @@ final class CustomFieldValueController extends BaseAdminController
 
                 // Handle image type separately
                 if ($customField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
-                    // Skip if no file field exists in the request
-                    if (!$this->getRequest()->files->has($fieldKey)) {
-                        continue;
-                    }
-
-                    try {
-                        /** @var UploadedFile|null $uploadedFile */
-                        $uploadedFile = $this->getRequest()->files->get($fieldKey);
-
-                        // Skip if no valid file was uploaded (empty file input)
-                        if (!$uploadedFile instanceof UploadedFile || $uploadedFile->getError() !== UPLOAD_ERR_OK) {
-                            continue;
-                        }
-
-                        // Create upload directory if it doesn't exist
-                        $uploadDir = THELIA_LOCAL_DIR . 'media' . DS . 'images' . DS . 'customField';
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0777, true);
-                        }
-
-                        // Generate unique filename
-                        $fileName = uniqid() . '_' . $uploadedFile->getClientOriginalName();
-                        $uploadedFile->move($uploadDir, $fileName);
-
-                        // Find or create custom field value first
-                        $customFieldValue = CustomFieldValueQuery::create()
-                            ->filterByCustomFieldId($customField->getId())
-                            ->filterBySource($source)
-                            ->filterBySourceId($sourceId)
-                            ->findOneOrCreate();
-
-                        $customFieldValue->save();
-
-                        // Check if image already exists for this custom field value
-                        $customFieldImage = CustomFieldImageQuery::create()
-                            ->filterByCustomFieldValueId($customFieldValue->getId())
-                            ->findOne();
-
-                        if (!$customFieldImage) {
-                            $customFieldImage = new CustomFieldImage();
-                            $customFieldImage->setCustomFieldValueId($customFieldValue->getId());
-                        } else {
-                            // Delete old file if exists
-                            $oldFile = $uploadDir . DS . $customFieldImage->getFile();
-                            if (file_exists($oldFile)) {
-                                unlink($oldFile);
-                            }
-                        }
-
-                        $customFieldImage->setFile($fileName);
-                        $customFieldImage->save();
-                    } catch (\Exception $e) {
-                        // Skip this field if there's an error with the file
-                        continue;
-                    }
+                    $this->handleImageUpload($fieldKey, $customField->getId(), $source, $sourceId, null);
                 } else {
-                    $value = $this->getRequest()->request->get($fieldKey);
-
-                    if (null !== $value) {
-                        $customFieldValue = CustomFieldValueQuery::create()
-                            ->filterByCustomFieldId($customField->getId())
-                            ->filterBySource($source)
-                            ->filterBySourceId($sourceId)
-                            ->filterByRepeaterRowId(null)
-                            ->findOne();
-
-                        if (!$customFieldValue) {
-                            $customFieldValue = new \CustomFields\Model\CustomFieldValue();
-                            $customFieldValue->setCustomFieldId($customField->getId());
-                            $customFieldValue->setSource($source);
-                            $customFieldValue->setSourceId($sourceId);
-                        }
-
-                        if (
-                            in_array($customField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES) ||
-                            !$customField->isInternational()
-                        ) {
-                            $customFieldValue
-                                ->setSimpleValue($value)
-                                ->save();
-                        } else {
-                            $customFieldValue
-                                ->setLocale($locale)
-                                ->setValue($value)
-                                ->save();
-                        }
-                    }
+                    $this->handleFieldValue($fieldKey, $customField, $source, $sourceId, $locale, null);
                 }
             }
 
@@ -302,8 +218,8 @@ final class CustomFieldValueController extends BaseAdminController
         $existingRowsQuery = CustomFieldRepeaterRowQuery::create()
             ->filterByCustomFieldId($repeaterId)
             ->filterBySource($source)
-            ->filterBySourceId($sourceId);
-
+            ->filterBySourceId($sourceId)
+            ->filterByParentRepeaterRowId($parentRepeaterRowId);
 
         $existingRows = $existingRowsQuery->find();
 
@@ -331,7 +247,7 @@ final class CustomFieldValueController extends BaseAdminController
                 $repeaterRow->setCustomFieldId($repeaterId);
                 $repeaterRow->setSource($source);
                 $repeaterRow->setSourceId($sourceId);
-
+                $repeaterRow->setParentRepeaterRowId($parentRepeaterRowId);
             }
 
             $repeaterRow->setPosition($rowIndex);
@@ -381,83 +297,122 @@ final class CustomFieldValueController extends BaseAdminController
 
                 // Gérer les images
                 if ($subField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
-                    if (!$this->getRequest()->files->has($subFieldKey)) {
-                        continue;
-                    }
-
-                    /** @var UploadedFile|null $uploadedFile */
-                    $uploadedFile = $this->getRequest()->files->get($subFieldKey);
-                    if (!$uploadedFile instanceof UploadedFile || $uploadedFile->getError() !== UPLOAD_ERR_OK) {
-                        continue;
-                    }
-
-                    try {
-                        $uploadDir = THELIA_LOCAL_DIR . 'media' . DS . 'images' . DS . 'customField';
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0777, true);
-                        }
-
-                        $fileName = uniqid() . '_' . $uploadedFile->getClientOriginalName();
-                        $uploadedFile->move($uploadDir, $fileName);
-
-                        $customFieldValue = CustomFieldValueQuery::create()
-                            ->filterByCustomFieldId($subField->getId())
-                            ->filterBySource($source)
-                            ->filterBySourceId($sourceId)
-                            ->filterByRepeaterRowId($repeaterRowId)
-                            ->findOneOrCreate();
-                        $customFieldValue->save();
-
-                        $existingImage = CustomFieldImageQuery::create()
-                            ->filterByCustomFieldValueId($customFieldValue->getId())
-                            ->findOne();
-
-                        if (!$existingImage) {
-                            $existingImage = new CustomFieldImage();
-                            $existingImage->setCustomFieldValueId($customFieldValue->getId());
-                        } else {
-                            $oldFile = $uploadDir . DS . $existingImage->getFile();
-                            if (file_exists($oldFile)) {
-                                unlink($oldFile);
-                            }
-                        }
-
-                        $existingImage->setFile($fileName);
-                        $existingImage->save();
-                    } catch (\Exception $e) {
-                        // Skip on error
-                    }
+                    $this->handleImageUpload($subFieldKey, $subField->getId(), $source, $sourceId, $repeaterRowId);
                     continue;
                 }
 
                 // Gérer les autres types de champs
-                $value = $this->getRequest()->request->get($subFieldKey);
+                $this->handleFieldValue($subFieldKey, $subField, $source, $sourceId, $locale, $repeaterRowId);
+            }
+        }
+    }
 
-                if (null === $value) {
-                    continue;
-                }
+    private function handleFieldValue(
+        string $fieldKey,
+        \CustomFields\Model\CustomField $customField,
+        string $source,
+        ?int $sourceId,
+        string $locale,
+        ?int $repeaterRowId
+    ): void {
+        $value = $this->getRequest()->request->get($fieldKey);
 
-                $customFieldValue = CustomFieldValueQuery::create()
-                    ->filterByCustomFieldId($subField->getId())
-                    ->filterBySource($source)
-                    ->filterBySourceId($sourceId)
-                    ->filterByRepeaterRowId($repeaterRowId)
-                    ->findOneOrCreate();
+        if (null === $value) {
+            return;
+        }
 
-                if (
-                    in_array($subField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES)
-                    || !$subField->isInternational()
-                ) {
-                    $customFieldValue
-                        ->setSimpleValue($value)
-                        ->save();
-                } else {
-                    $customFieldValue
-                        ->setLocale($locale)
-                        ->setValue($value)
-                        ->save();
+        $customFieldValue = CustomFieldValueQuery::create()
+            ->filterByCustomFieldId($customField->getId())
+            ->filterBySource($source)
+            ->filterBySourceId($sourceId)
+            ->filterByRepeaterRowId($repeaterRowId)
+            ->findOne();
+
+        if (!$customFieldValue) {
+            $customFieldValue = new \CustomFields\Model\CustomFieldValue();
+            $customFieldValue->setCustomFieldId($customField->getId());
+            $customFieldValue->setSource($source);
+            $customFieldValue->setSourceId($sourceId);
+            $customFieldValue->setRepeaterRowId($repeaterRowId);
+        }
+
+        if (
+            in_array($customField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES) ||
+            !$customField->isInternational()
+        ) {
+            $customFieldValue
+                ->setSimpleValue($value)
+                ->save();
+        } else {
+            $customFieldValue
+                ->setLocale($locale)
+                ->setValue($value)
+                ->save();
+        }
+    }
+
+    private function handleImageUpload(
+        string $fieldKey,
+        int $customFieldId,
+        string $source,
+        ?int $sourceId,
+        ?int $repeaterRowId
+    ): void {
+        // Skip if no file field exists in the request
+        if (!$this->getRequest()->files->has($fieldKey)) {
+            return;
+        }
+
+        try {
+            /** @var UploadedFile|null $uploadedFile */
+            $uploadedFile = $this->getRequest()->files->get($fieldKey);
+ 
+            // Skip if no valid file was uploaded (empty file input)
+            if (!$uploadedFile instanceof UploadedFile || $uploadedFile->getError() !== UPLOAD_ERR_OK) {
+                return;
+            }
+
+            // Create upload directory if it doesn't exist
+            $uploadDir = THELIA_LOCAL_DIR . 'media' . DS . 'images' . DS . 'customField';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            // Generate unique filename
+            $fileName = uniqid() . '_' . $uploadedFile->getClientOriginalName();
+            $uploadedFile->move($uploadDir, $fileName);
+
+            // Find or create custom field value first
+            $customFieldValue = CustomFieldValueQuery::create()
+                ->filterByCustomFieldId($customFieldId)
+                ->filterBySource($source)
+                ->filterBySourceId($sourceId)
+                ->filterByRepeaterRowId($repeaterRowId)
+                ->findOneOrCreate();
+
+            $customFieldValue->save();
+
+            // Check if image already exists for this custom field value
+            $customFieldImage = CustomFieldImageQuery::create()
+                ->filterByCustomFieldValueId($customFieldValue->getId())
+                ->findOne();
+
+            if (!$customFieldImage) {
+                $customFieldImage = new CustomFieldImage();
+                $customFieldImage->setCustomFieldValueId($customFieldValue->getId());
+            } else {
+                // Delete old file if exists
+                $oldFile = $uploadDir . DS . $customFieldImage->getFile();
+                if (file_exists($oldFile)) {
+                    unlink($oldFile);
                 }
             }
+
+            $customFieldImage->setFile($fileName);
+            $customFieldImage->save();
+        } catch (\Exception $e) {
+            // Skip this field if there's an error with the file
+            return;
         }
     }
 }

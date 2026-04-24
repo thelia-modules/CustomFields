@@ -94,13 +94,20 @@ CREATE TABLE `custom_field_repeater_row`
     `custom_field_id` INTEGER NOT NULL,
     `source` VARCHAR(100) NOT NULL,
     `source_id` INTEGER,
+    `parent_repeater_row_id` INTEGER,
     `position` INTEGER DEFAULT 0 NOT NULL,
     PRIMARY KEY (`id`),
     INDEX `idx_cfrr_source` (`source`, `source_id`, `custom_field_id`),
     INDEX `custom_field_repeater_row_fi_361737` (`custom_field_id`),
+    INDEX `custom_field_repeater_row_fi_e8b11b` (`parent_repeater_row_id`),
     CONSTRAINT `custom_field_repeater_row_fk_361737`
         FOREIGN KEY (`custom_field_id`)
         REFERENCES `custom_field` (`id`)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT `custom_field_repeater_row_fk_e8b11b`
+        FOREIGN KEY (`parent_repeater_row_id`)
+        REFERENCES `custom_field_repeater_row` (`id`)
         ON UPDATE CASCADE
         ON DELETE CASCADE
 ) ENGINE=InnoDB;

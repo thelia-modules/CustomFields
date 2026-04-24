@@ -184,7 +184,6 @@ final class OptionPageController extends BaseAdminController
         $groupedFields = $this->sortingService->groupByParent($customFields);
 
         [$repeaterValues, $repeaterSubfields] = $this->repeaterDataLoader->loadRepeaterData($customFields, $source, null, $locale);
-
         return $this->render('option-page-view', [
             'option_page' => $optionPage,
             'custom_fields' => $customFields,
