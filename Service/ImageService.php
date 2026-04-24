@@ -22,7 +22,23 @@ class ImageService
 
         try {
             if (!!$customFieldImage && !$useTheliaLibrary && !empty($customFieldImage->getFile())) {
-                $imgSourcePath = $customFieldImage->getUploadDir() . DS . $customFieldImage->getFile();
+                $file = $customFieldImage->getFile();
+                $imgSourcePath = $customFieldImage->getUploadDir() . DS . $file;
+
+                // GD/Imagick cannot process SVGs — copy directly to the public cache
+                if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'svg') {
+                    $cacheDir = THELIA_WEB_DIR . 'cache' . DS . 'images' . DS . 'customField';
+                    if (!is_dir($cacheDir)) {
+                        mkdir($cacheDir, 0777, true);
+                    }
+                    $cachedPath = $cacheDir . DS . $file;
+                    if (!file_exists($cachedPath)) {
+                        copy($imgSourcePath, $cachedPath);
+                    }
+                    $fileUrl = '/cache/images/customField/' . $file;
+                    $originalFileUrl = $fileUrl;
+                    return [$fileUrl, $originalFileUrl];
+                }
 
                 $event = new ImageEvent();
 

@@ -8,9 +8,12 @@ use CustomFields\Form\OptionPageForm;
 use CustomFields\Model\CustomFieldOptionPage;
 use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldQuery;
+use CustomFields\Model\CustomFieldRepeaterRowQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
+use CustomFields\Service\ImageService;
 use Propel\Runtime\Exception\PropelException;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,9 +31,13 @@ use Thelia\Tools\URL;
 #[Route(path: '/admin/module/customfields/option-pages', name: 'customfields_option_pages_')]
 final class OptionPageController extends BaseAdminController
 {
+    private ImageService $imageService;
+
     public function __construct(
-        private readonly CustomFieldSortingService $sortingService
+        private readonly CustomFieldSortingService $sortingService,
+        private readonly EventDispatcherInterface $dispatcher
     ) {
+        $this->imageService = new ImageService($this->dispatcher);
     }
 
     #[Route(path: '', name: 'list')]
@@ -159,6 +166,7 @@ final class OptionPageController extends BaseAdminController
             $value = CustomFieldValueQuery::create()
                 ->filterByCustomFieldId($customField->getId())
                 ->filterBySource($source)
+                ->filterByRepeaterRowId(null)
                 ->findOne();
 
             if (
@@ -180,12 +188,83 @@ final class OptionPageController extends BaseAdminController
 
         $groupedFields = $this->sortingService->groupByParent($customFields);
 
+        $repeaterValues = [];
+        $repeaterSubfields = [];
+
+        foreach ($customFields as $customField) {
+            if ($customField->getType() !== 'repeater') {
+                continue;
+            }
+
+            $repeaterId = $customField->getId();
+
+            $subFields = CustomFieldQuery::create()
+                ->filterByCustomFieldParentId($repeaterId)
+                ->orderByPosition()
+                ->find();
+
+            $repeaterSubfields[$repeaterId] = $subFields;
+
+            $rows = CustomFieldRepeaterRowQuery::create()
+                ->filterByCustomFieldId($repeaterId)
+                ->filterBySource($source)
+                ->filterBySourceId(null)
+                ->orderByPosition()
+                ->find();
+
+            $rowData = [];
+            foreach ($rows as $row) {
+                $rowId = $row->getId();
+                $rowValues = [];
+
+                foreach ($subFields as $subField) {
+                    $value = CustomFieldValueQuery::create()
+                        ->filterByCustomFieldId($subField->getId())
+                        ->filterBySource($source)
+                        ->filterBySourceId(null)
+                        ->filterByRepeaterRowId($rowId)
+                        ->findOne();
+
+                    if ($value) {
+                        if ($subField->getType() === 'image') {
+                            $image = $value->getCustomFieldImages()->getFirst();
+                            if ($image && $image->getFile()) {
+                                [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
+                                $rowValues[$subField->getId()] = [
+                                    'id'  => $image->getId(),
+                                    'url' => $fileUrl ?? '',
+                                ];
+                            } else {
+                                $rowValues[$subField->getId()] = null;
+                            }
+                        } elseif (
+                            in_array($subField->getType(), ['content', 'category', 'folder', 'product'])
+                            || !$subField->isInternational()
+                        ) {
+                            $rowValues[$subField->getId()] = $value->getSimpleValue();
+                        } else {
+                            $value->setLocale($locale);
+                            $rowValues[$subField->getId()] = $value->getValue();
+                        }
+                    } else {
+                        $rowValues[$subField->getId()] = '';
+                    }
+                }
+
+                $rowData[] = ['__row_id' => $rowId] + $rowValues;
+            }
+
+            $repeaterValues[$repeaterId] = $rowData;
+        }
+
         return $this->render('option-page-view', [
             'option_page' => $optionPage,
             'custom_fields' => $customFields,
             'grouped_fields' => $groupedFields,
             'values' => $values,
             'value_ids' => $valueIds,
+            'repeater_values' => $repeaterValues,
+            'repeater_subfields' => $repeaterSubfields,
             'source' => $source,
             'edit_language_id' => $editLanguageId,
         ]);

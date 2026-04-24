@@ -4,8 +4,10 @@ namespace CustomFields\Hook;
 
 use CustomFields\CustomFields;
 use CustomFields\Model\CustomFieldQuery;
+use CustomFields\Model\CustomFieldRepeaterRowQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
+use CustomFields\Service\ImageService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Hook\BaseHook;
@@ -22,12 +24,89 @@ use Thelia\Model\ProductQuery;
 
 class TabHook extends BaseHook
 {
+    private function loadRepeaterData($customFields, string $source, ?int $sourceId, string $locale): array
+    {
+        $repeaterValues = [];
+        $repeaterSubfields = [];
+
+        foreach ($customFields as $customField) {
+            if ($customField->getType() !== 'repeater') {
+                continue;
+            }
+
+            $repeaterId = $customField->getId();
+
+            $subFields = CustomFieldQuery::create()
+                ->filterByCustomFieldParentId($repeaterId)
+                ->orderByPosition()
+                ->find();
+
+            $repeaterSubfields[$repeaterId] = $subFields;
+
+            $rows = CustomFieldRepeaterRowQuery::create()
+                ->filterByCustomFieldId($repeaterId)
+                ->filterBySource($source)
+                ->filterBySourceId($sourceId)
+                ->orderByPosition()
+                ->find();
+
+            $rowData = [];
+            foreach ($rows as $row) {
+                $rowId = $row->getId();
+                $rowValues = [];
+
+                foreach ($subFields as $subField) {
+                    $value = CustomFieldValueQuery::create()
+                        ->filterByCustomFieldId($subField->getId())
+                        ->filterBySource($source)
+                        ->filterBySourceId($sourceId)
+                        ->filterByRepeaterRowId($rowId)
+                        ->findOne();
+
+                    if ($value) {
+                        if ($subField->getType() === 'image') {
+                            $image = $value->getCustomFieldImages()->getFirst();
+                            if ($image && $image->getFile()) {
+                                [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
+                                $rowValues[$subField->getId()] = [
+                                    'id'  => $image->getId(),
+                                    'url' => $fileUrl ?? '',
+                                ];
+                            } else {
+                                $rowValues[$subField->getId()] = null;
+                            }
+                        } elseif (
+                            in_array($subField->getType(), ['content', 'category', 'folder', 'product'])
+                            || !$subField->isInternational()
+                        ) {
+                            $rowValues[$subField->getId()] = $value->getSimpleValue();
+                        } else {
+                            $value->setLocale($locale);
+                            $rowValues[$subField->getId()] = $value->getValue();
+                        }
+                    } else {
+                        $rowValues[$subField->getId()] = '';
+                    }
+                }
+
+                $rowData[] = ['__row_id' => $rowId] + $rowValues;
+            }
+
+            $repeaterValues[$repeaterId] = $rowData;
+        }
+
+        return [$repeaterValues, $repeaterSubfields];
+    }
+
+    private ImageService $imageService;
+
     public function __construct(
         ?EventDispatcherInterface $dispatcher = null,
         ?ParserResolver $parserResolver = null,
         private readonly CustomFieldSortingService $sortingService
     ) {
         parent::__construct($dispatcher, $parserResolver);
+        $this->imageService = new ImageService($this->dispatcher);
     }
 
     public function onProductTab(HookRenderBlockEvent $event): void
@@ -58,11 +137,19 @@ class TabHook extends BaseHook
                 ->filterByCustomFieldId($customField->getId())
                 ->filterBySource('product')
                 ->filterBySourceId($productId)
+                ->filterByRepeaterRowId(null)
                 ->findOne();
 
             if ($value) {
-                $value->setLocale($locale);
-                $values[$customField->getId()] = $value->getValue();
+                if (
+                    in_array($customField->getType(), ['content', 'category', 'folder', 'product', 'image'])
+                    || !$customField->isInternational()
+                ) {
+                    $values[$customField->getId()] = $value->getSimpleValue() ?? '';
+                } else {
+                    $value->setLocale($locale);
+                    $values[$customField->getId()] = $value->getValue();
+                }
                 $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
@@ -72,6 +159,8 @@ class TabHook extends BaseHook
 
         // Group fields by parent
         $groupedFields = $this->sortingService->groupByParent($customFields);
+
+        [$repeaterValues, $repeaterSubfields] = $this->loadRepeaterData($customFields, 'product', $productId, $locale);
 
         $event->add([
             'id' => 'custom_fields',
@@ -83,6 +172,8 @@ class TabHook extends BaseHook
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'value_ids' => $valueIds,
+                    'repeater_values' => $repeaterValues,
+                    'repeater_subfields' => $repeaterSubfields,
                     'source' => 'product',
                     'source_id' => $productId,
                     'edit_language_id' => $editLanguageId,
@@ -119,11 +210,19 @@ class TabHook extends BaseHook
                 ->filterByCustomFieldId($customField->getId())
                 ->filterBySource('content')
                 ->filterBySourceId($contentId)
+                ->filterByRepeaterRowId(null)
                 ->findOne();
 
             if ($value) {
-                $value->setLocale($locale);
-                $values[$customField->getId()] = $value->getValue();
+                if (
+                    in_array($customField->getType(), ['content', 'category', 'folder', 'product', 'image'])
+                    || !$customField->isInternational()
+                ) {
+                    $values[$customField->getId()] = $value->getSimpleValue() ?? '';
+                } else {
+                    $value->setLocale($locale);
+                    $values[$customField->getId()] = $value->getValue();
+                }
                 $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
@@ -132,6 +231,8 @@ class TabHook extends BaseHook
         }
 
         $groupedFields = $this->sortingService->groupByParent($customFields);
+
+        [$repeaterValues, $repeaterSubfields] = $this->loadRepeaterData($customFields, 'content', $contentId, $locale);
 
         $event->add([
             'id' => 'custom_fields',
@@ -143,6 +244,8 @@ class TabHook extends BaseHook
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'value_ids' => $valueIds,
+                    'repeater_values' => $repeaterValues,
+                    'repeater_subfields' => $repeaterSubfields,
                     'source' => 'content',
                     'source_id' => $contentId,
                     'edit_language_id' => $editLanguageId,
@@ -179,11 +282,19 @@ class TabHook extends BaseHook
                 ->filterByCustomFieldId($customField->getId())
                 ->filterBySource('category')
                 ->filterBySourceId($categoryId)
+                ->filterByRepeaterRowId(null)
                 ->findOne();
 
             if ($value) {
-                $value->setLocale($locale);
-                $values[$customField->getId()] = $value->getValue();
+                if (
+                    in_array($customField->getType(), ['content', 'category', 'folder', 'product', 'image'])
+                    || !$customField->isInternational()
+                ) {
+                    $values[$customField->getId()] = $value->getSimpleValue() ?? '';
+                } else {
+                    $value->setLocale($locale);
+                    $values[$customField->getId()] = $value->getValue();
+                }
                 $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
@@ -192,6 +303,8 @@ class TabHook extends BaseHook
         }
 
         $groupedFields = $this->sortingService->groupByParent($customFields);
+
+        [$repeaterValues, $repeaterSubfields] = $this->loadRepeaterData($customFields, 'category', $categoryId, $locale);
 
         $event->add([
             'id' => 'custom_fields',
@@ -203,10 +316,12 @@ class TabHook extends BaseHook
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'value_ids' => $valueIds,
+                    'repeater_values' => $repeaterValues,
+                    'repeater_subfields' => $repeaterSubfields,
                     'source' => 'category',
                     'source_id' => $categoryId,
                     'edit_language_id' => $editLanguageId,
-                    'page_url' => '/admin/categories/update/'.$categoryId,
+                    'page_url' => '/admin/categories/update?category_id='.$categoryId,
                 ]
             ),
         ]);
@@ -239,11 +354,19 @@ class TabHook extends BaseHook
                 ->filterByCustomFieldId($customField->getId())
                 ->filterBySource('folder')
                 ->filterBySourceId($folderId)
+                ->filterByRepeaterRowId(null)
                 ->findOne();
 
             if ($value) {
-                $value->setLocale($locale);
-                $values[$customField->getId()] = $value->getValue();
+                if (
+                    in_array($customField->getType(), ['content', 'category', 'folder', 'product', 'image'])
+                    || !$customField->isInternational()
+                ) {
+                    $values[$customField->getId()] = $value->getSimpleValue() ?? '';
+                } else {
+                    $value->setLocale($locale);
+                    $values[$customField->getId()] = $value->getValue();
+                }
                 $valueIds[$customField->getId()] = $value->getId();
             } else {
                 $values[$customField->getId()] = '';
@@ -252,6 +375,8 @@ class TabHook extends BaseHook
         }
 
         $groupedFields = $this->sortingService->groupByParent($customFields);
+
+        [$repeaterValues, $repeaterSubfields] = $this->loadRepeaterData($customFields, 'folder', $folderId, $locale);
 
         $event->add([
             'id' => 'custom_fields',
@@ -263,6 +388,8 @@ class TabHook extends BaseHook
                     'grouped_fields' => $groupedFields,
                     'values' => $values,
                     'value_ids' => $valueIds,
+                    'repeater_values' => $repeaterValues,
+                    'repeater_subfields' => $repeaterSubfields,
                     'source' => 'folder',
                     'source_id' => $folderId,
                     'edit_language_id' => $editLanguageId,
