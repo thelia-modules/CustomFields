@@ -85,5 +85,15 @@ return [
     'Or create new parent' => 'Ou créer un nouveau parent',
     'Enter a new parent group name' => 'Entrez un nom de groupe parent',
     'International' => 'International',
-    'Check to allow translation of the field' => 'Cochez pour permettre la traduction du champ'
+    'Check to allow translation of the field' => 'Cochez pour permettre la traduction du champ',
+
+    // Repeater
+    'Repeater' => 'Répéteur',
+    'Add row' => 'Ajouter une ligne',
+    'Remove row' => 'Supprimer la ligne',
+    'No sub-fields defined for this repeater.' => 'Aucun sous-champ défini pour ce répétiteur.',
+    'Create child fields and set this repeater as their parent group.' => 'Créez des champs enfants et définissez ce répétiteur comme leur groupe parent.',
+    'Create sub-field' => 'Créer un sous-champ',
+    '+ Add sub-field' => '+ Ajouter un sous-champ',
+    'No sub-fields defined for this repeater. Click the button above to add one.' => 'Aucun sous-champ défini pour ce répétiteur. Cliquez sur le bouton ci-dessus pour en ajouter un.',
 ];

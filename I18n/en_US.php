@@ -84,5 +84,15 @@ return [
     'Or create new parent' => 'Or create new parent',
     'Enter a new parent group name' => 'Enter a new parent group name',
     'International' => 'International',
-    'Check to allow translation of the field' => 'Check to allow translation of the field'
+    'Check to allow translation of the field' => 'Check to allow translation of the field',
+
+    // Repeater
+    'Repeater' => 'Repeater',
+    'Add row' => 'Add row',
+    'Remove row' => 'Remove row',
+    'No sub-fields defined for this repeater.' => 'No sub-fields defined for this repeater.',
+    'Create child fields and set this repeater as their parent group.' => 'Create child fields and set this repeater as their parent group.',
+    'Create sub-field' => 'Create sub-field',
+    '+ Add sub-field' => '+ Add sub-field',
+    'No sub-fields defined for this repeater. Click the button above to add one.' => 'No sub-fields defined for this repeater. Click the button above to add one.',
 ];

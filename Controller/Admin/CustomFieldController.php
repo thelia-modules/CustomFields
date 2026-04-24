@@ -11,11 +11,14 @@ use CustomFields\Model\CustomFieldParent;
 use CustomFields\Model\CustomFieldParentQuery;
 use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldQuery;
+use CustomFields\Model\CustomFieldRepeaterRowQuery;
 use CustomFields\Model\CustomFieldSource;
 use CustomFields\Model\CustomFieldSourceQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
 use CustomFields\Service\ExportService;
+use CustomFields\Service\ImageService;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Form;
@@ -38,9 +41,13 @@ use Thelia\Tools\URL;
 #[Route(path: '/admin/module/customfields', name: 'customfields_')]
 final class CustomFieldController extends BaseAdminController
 {
+    private ImageService $imageService;
+
     public function __construct(
-        private readonly CustomFieldSortingService $sortingService
+        private readonly CustomFieldSortingService $sortingService,
+        private readonly EventDispatcherInterface $dispatcher
     ) {
+        $this->imageService = new ImageService($this->dispatcher);
     }
 
     #[Route(path: '/list', name: 'list')]
@@ -74,6 +81,7 @@ final class CustomFieldController extends BaseAdminController
             $value = CustomFieldValueQuery::create()
                 ->filterByCustomFieldId($customField->getId())
                 ->filterBySource('general')
+                ->filterByRepeaterRowId(null)
                 ->findOne();
 
             if (
@@ -96,6 +104,88 @@ final class CustomFieldController extends BaseAdminController
         // Group general fields by parent
         $groupedGeneralFields = $this->sortingService->groupByParent($generalCustomFields);
 
+        $generalRepeaterValues = [];
+        $generalRepeaterSubfields = [];
+        $source = 'general';
+
+        foreach ($generalCustomFields as $customField) {
+            if ($customField->getType() !== 'repeater') {
+                continue;
+            }
+
+            $repeaterId = $customField->getId();
+
+            $subFields = CustomFieldQuery::create()
+                ->filterByCustomFieldParentId($repeaterId)
+                ->orderByPosition()
+                ->find();
+
+            $generalRepeaterSubfields[$repeaterId] = $subFields;
+
+            $rows = CustomFieldRepeaterRowQuery::create()
+                ->filterByCustomFieldId($repeaterId)
+                ->filterBySource($source)
+                ->filterBySourceId(null)
+                ->orderByPosition()
+                ->find();
+
+            $rowData = [];
+            foreach ($rows as $row) {
+                $rowId = $row->getId();
+                $rowValues = [];
+
+                foreach ($subFields as $subField) {
+                    $value = CustomFieldValueQuery::create()
+                        ->filterByCustomFieldId($subField->getId())
+                        ->filterBySource($source)
+                        ->filterBySourceId(null)
+                        ->filterByRepeaterRowId($rowId)
+                        ->findOne();
+
+                    if ($value) {
+                        if ($subField->getType() === 'image') {
+                            $image = $value->getCustomFieldImages()->getFirst();
+                            if ($image && $image->getFile()) {
+                                [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
+                                $rowValues[$subField->getId()] = [
+                                    'id'  => $image->getId(),
+                                    'url' => $fileUrl ?? '',
+                                ];
+                            } else {
+                                $rowValues[$subField->getId()] = null;
+                            }
+                        } elseif (
+                            in_array($subField->getType(), ['content', 'category', 'folder', 'product'])
+                            || !$subField->isInternational()
+                        ) {
+                            $rowValues[$subField->getId()] = $value->getSimpleValue();
+                        } else {
+                            $value->setLocale($locale);
+                            $rowValues[$subField->getId()] = $value->getValue();
+                        }
+                    } else {
+                        $rowValues[$subField->getId()] = '';
+                    }
+                }
+
+                $rowData[] = ['__row_id' => $rowId] + $rowValues;
+            }
+
+            $generalRepeaterValues[$repeaterId] = $rowData;
+        }
+
+        // Build subfield → repeater map for the listing
+        $repeaterFields = CustomFieldQuery::create()->filterByType('repeater')->find();
+        $subfieldRepeaterMap = [];
+        foreach ($repeaterFields as $repeater) {
+            $subs = CustomFieldQuery::create()
+                ->filterByCustomFieldParentId($repeater->getId())
+                ->find();
+            foreach ($subs as $sub) {
+                $subfieldRepeaterMap[$sub->getId()] = $repeater;
+            }
+        }
+
         // Get option pages
         $optionPages = CustomFieldOptionPageQuery::create()->orderByTitle()->find();
 
@@ -106,8 +196,11 @@ final class CustomFieldController extends BaseAdminController
             'grouped_general_fields' => $groupedGeneralFields,
             'general_values' => $generalValues,
             'general_value_ids' => $generalValueIds,
+            'general_repeater_values' => $generalRepeaterValues,
+            'general_repeater_subfields' => $generalRepeaterSubfields,
             'edit_language_id' => $editLanguageId,
             'option_pages' => $optionPages,
+            'subfield_repeater_map' => $subfieldRepeaterMap,
         ]);
     }
 
@@ -118,12 +211,31 @@ final class CustomFieldController extends BaseAdminController
             return $response;
         }
 
+        $parentId = (int) $this->getRequest()->query->get('parent_repeater_id');
+
         // Get all parents for the dropdown
         $parents = CustomFieldParentQuery::create()->find();
 
-        $form = $this->createForm(CustomFieldForm::getName(), FormType::class, [
+        $formData = [
             'is_international' => true,
-        ]);
+        ];
+
+        if ($parentId > 0) {
+            $formData['custom_field_parent_id'] = $parentId;
+            // Pre-select same sources as parent repeater
+            $repeaterSources = CustomFieldSourceQuery::create()
+                ->filterByCustomFieldId($parentId)
+                ->find();
+            $sourceCodes = [];
+            foreach ($repeaterSources as $rs) {
+                $sourceCodes[] = $rs->getSource();
+            }
+            if (!empty($sourceCodes)) {
+                $formData['sources'] = $sourceCodes;
+            }
+        }
+
+        $form = $this->createForm(CustomFieldForm::getName(), FormType::class, $formData);
         $this->getParserContext()->addForm($form);
         $error = null;
 
@@ -146,10 +258,17 @@ final class CustomFieldController extends BaseAdminController
             // Form not submitted, display empty form
         }
 
+        $parentRepeater = null;
+        if ($parentId > 0) {
+            $parentRepeater = CustomFieldQuery::create()->findPk($parentId);
+        }
+
         return $this->render('custom-field-form', [
             'error' => $error,
             'custom_field' => null,
             'parents' => $parents,
+            'sub_fields' => [],
+            'parent_repeater' => $parentRepeater,
         ]);
     }
 
@@ -212,10 +331,30 @@ final class CustomFieldController extends BaseAdminController
             // Form not submitted, display form with current values
         }
 
+        $subFields = [];
+        $parentRepeater = null;
+        if ($customField) {
+            if ($customField->getType() === 'repeater') {
+                $subFields = CustomFieldQuery::create()
+                    ->filterByCustomFieldParentId($customField->getId())
+                    ->orderByPosition()
+                    ->find();
+            } elseif ($customField->getCustomFieldParentId()) {
+                // Check if this field is a sub-field of a repeater
+                $possibleRepeater = CustomFieldQuery::create()
+                    ->filterById($customField->getCustomFieldParentId())
+                    ->filterByType('repeater')
+                    ->findOne();
+                $parentRepeater = $possibleRepeater;
+            }
+        }
+
         return $this->render('custom-field-form', [
             'error' => $error,
             'custom_field' => $customField,
             'parents' => $parents,
+            'sub_fields' => $subFields,
+            'parent_repeater' => $parentRepeater,
         ]);
     }
 
@@ -279,6 +418,11 @@ final class CustomFieldController extends BaseAdminController
         }
 
         try {
+            if ($customField->getType() === 'repeater') {
+                CustomFieldQuery::create()
+                    ->filterByCustomFieldParentId($customField->getId())
+                    ->delete();
+            }
             $customField->delete();
 
             return new RedirectResponse(
