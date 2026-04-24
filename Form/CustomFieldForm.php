@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace CustomFields\Form;
 
-use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldParentQuery;
 use CustomFields\Model\Map\CustomFieldTableMap;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -22,28 +21,9 @@ final class CustomFieldForm extends BaseForm
         $parents = CustomFieldParentQuery::create()->find();
         $parentChoices = [];
         foreach ($parents as $parent) {
-            $parentChoices[$parent->getTitle()] = $parent->getId();
+            $parentChoices[$parent->getTitle() . ' (' . $parent->getSource() . ')'] = $parent->getId();
         }
         return $parentChoices;
-    }
-    private function getSourceChoices(): array
-    {
-        $choices = [
-            Translator::getInstance()->trans('Content', [], 'customfields') => 'content',
-            Translator::getInstance()->trans('Product', [], 'customfields') => 'product',
-            Translator::getInstance()->trans('Category', [], 'customfields') => 'category',
-            Translator::getInstance()->trans('Folder', [], 'customfields') => 'folder',
-            Translator::getInstance()->trans('General', [], 'customfields') => 'general',
-        ];
-
-        // Add option pages as sources
-        $optionPages = CustomFieldOptionPageQuery::create()->orderByTitle()->find();
-        foreach ($optionPages as $optionPage) {
-            $label = Translator::getInstance()->trans('Option Page', [], 'customfields') . ': ' . $optionPage->getTitle();
-            $choices[$label] = 'option_page_' . $optionPage->getCode();
-        }
-
-        return $choices;
     }
 
     protected function buildForm(): void
@@ -116,38 +96,16 @@ final class CustomFieldForm extends BaseForm
                 ]
             )
             ->add(
-                'sources',
+                'custom_field_parent_id',
                 ChoiceType::class,
                 [
                     'constraints' => [
                         new NotBlank(),
                     ],
-                    'choices' => $this->getSourceChoices(),
-                    'label' => Translator::getInstance()->trans('Sources', [], 'customfields'),
-                    'label_attr' => ['for' => 'custom_field_sources'],
-                    'required' => true,
-                    'multiple' => true,
-                    'expanded' => false,
-                ]
-            )
-            ->add(
-                'custom_field_parent_id',
-                ChoiceType::class,
-                [
                     'choices' => $this->getParentChoices(),
-                    'label' => Translator::getInstance()->trans('Parent Group', [], 'customfields'),
+                    'label' => Translator::getInstance()->trans('Group', [], 'customfields'),
                     'label_attr' => ['for' => 'custom_field_parent_id'],
-                    'required' => false,
-                    'placeholder' => Translator::getInstance()->trans('No parent', [], 'customfields'),
-                ]
-            )
-            ->add(
-                'new_parent_title',
-                TextType::class,
-                [
-                    'label' => Translator::getInstance()->trans('Or create new parent', [], 'customfields'),
-                    'label_attr' => ['for' => 'new_parent_title'],
-                    'required' => false,
+                    'required' => true,
                 ]
             );
     }

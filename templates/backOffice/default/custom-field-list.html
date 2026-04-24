@@ -26,9 +26,9 @@
     <div class="general-block-decorator">
         {* Tab Navigation *}
         <ul class="nav nav-tabs" role="tablist">
-            <li role="presentation" class="{if !$current_tab || $current_tab == 'fields'}active{/if}">
-                <a href="#fields" aria-controls="fields" role="tab" data-toggle="tab">
-                    {intl l="Custom Fields" d="customfields"}
+            <li role="presentation" class="{if !$current_tab || $current_tab == 'groups'}active{/if}">
+                <a href="#groups" aria-controls="groups" role="tab" data-toggle="tab">
+                    {intl l="Groups" d="customfields"}
                 </a>
             </li>
             <li role="presentation" class="{if $current_tab == 'general_values'}active{/if}">
@@ -50,11 +50,11 @@
 
         {* Tab Content *}
         <div class="tab-content">
-            {* Custom Fields Tab *}
-            <div role="tabpanel" class="tab-pane {if !$current_tab || $current_tab == 'fields'}active{/if}" id="fields">
+            {* Groups Tab *}
+            <div role="tabpanel" class="tab-pane {if !$current_tab || $current_tab == 'groups'}active{/if}" id="groups">
                 <div class="row">
                     <div class="col-md-12">
-                        {include file="custom-fields-listing.html"}
+                        {include file="custom-field-parent-list.html"}
                     </div>
                 </div>
             </div>

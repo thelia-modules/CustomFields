@@ -78,12 +78,40 @@ return [
     'General Custom Fields' => 'Champs personnalisés généraux',
     'No general custom fields defined. Create custom fields with \'general\' source first.' => 'Aucun champ personnalisé général défini. Créez d\'abord des champs avec la source \'général\'.',
 
-    // Parent field
+    // Parent field / Groups
     'Parent Group' => 'Groupe parent (optionnel)',
     'No parent' => 'Aucun parent',
     'Select a parent group to organize this field' => 'Sélectionnez un groupe parent pour organiser ce champ',
     'Or create new parent' => 'Ou créer un nouveau parent',
     'Enter a new parent group name' => 'Entrez un nom de groupe parent',
     'International' => 'International',
-    'Check to allow translation of the field' => 'Cochez pour permettre la traduction du champ'
+    'Check to allow translation of the field' => 'Cochez pour permettre la traduction du champ',
+
+    // Groups
+    'Groups' => 'Groupes',
+    'Group' => 'Groupe',
+    'Create a group' => 'Créer un groupe',
+    'Create a new group' => 'Créer un nouveau groupe',
+    'Edit group' => 'Modifier le groupe',
+    'Edit group: %title' => 'Modifier le groupe : %title',
+    'Group created successfully' => 'Groupe créé avec succès',
+    'Group updated successfully' => 'Groupe modifié avec succès',
+    'Group deleted successfully' => 'Groupe supprimé avec succès',
+    'Group not found' => 'Groupe introuvable',
+    'An error occurred while saving the group' => 'Une erreur est survenue lors de l\'enregistrement du groupe',
+    'An error occurred while updating the group' => 'Une erreur est survenue lors de la modification du groupe',
+    'An error occurred while deleting the group. Make sure no fields are associated with it.' => 'Une erreur est survenue lors de la suppression du groupe. Assurez-vous qu\'aucun champ ne lui est associé.',
+    'Are you sure you want to delete this group? All associated fields will be deleted.' => 'Êtes-vous sûr de vouloir supprimer ce groupe ? Tous les champs associés seront supprimés.',
+    'No groups found. Create your first group to start organizing custom fields.' => 'Aucun groupe trouvé. Créez votre premier groupe pour commencer à organiser les champs personnalisés.',
+    'Fields count' => 'Nombre de champs',
+    'View fields' => 'Voir les champs',
+    'Fields in group: %title' => 'Champs dans le groupe : %title',
+    'Add a field' => 'Ajouter un champ',
+    'Add the first field' => 'Ajouter le premier champ',
+    'No custom fields in this group yet.' => 'Aucun champ personnalisé dans ce groupe pour le moment.',
+    '-- Select a source --' => '-- Sélectionnez une source --',
+    'The source determines where these custom fields will be available (products, contents, etc.)' => 'La source détermine où ces champs personnalisés seront disponibles (produits, contenus, etc.)',
+    'Yes' => 'Oui',
+    'No' => 'Non',
+    'Image' => 'Image',
 ];

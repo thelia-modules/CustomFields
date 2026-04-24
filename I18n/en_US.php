@@ -77,12 +77,40 @@ return [
     'General Custom Fields' => 'General Custom Fields',
     'No general custom fields defined. Create custom fields with \'general\' source first.' => 'No general custom fields defined. Create custom fields with \'general\' source first.',
 
-    // Parent field
+    // Parent field / Groups
     'Parent Group' => 'Parent Group (optional)',
     'No parent' => 'No parent',
     'Select a parent group to organize this field' => 'Select a parent group to organize this field',
     'Or create new parent' => 'Or create new parent',
     'Enter a new parent group name' => 'Enter a new parent group name',
     'International' => 'International',
-    'Check to allow translation of the field' => 'Check to allow translation of the field'
+    'Check to allow translation of the field' => 'Check to allow translation of the field',
+
+    // Groups
+    'Groups' => 'Groups',
+    'Group' => 'Group',
+    'Create a group' => 'Create a group',
+    'Create a new group' => 'Create a new group',
+    'Edit group' => 'Edit group',
+    'Edit group: %title' => 'Edit group: %title',
+    'Group created successfully' => 'Group created successfully',
+    'Group updated successfully' => 'Group updated successfully',
+    'Group deleted successfully' => 'Group deleted successfully',
+    'Group not found' => 'Group not found',
+    'An error occurred while saving the group' => 'An error occurred while saving the group',
+    'An error occurred while updating the group' => 'An error occurred while updating the group',
+    'An error occurred while deleting the group. Make sure no fields are associated with it.' => 'An error occurred while deleting the group. Make sure no fields are associated with it.',
+    'Are you sure you want to delete this group? All associated fields will be deleted.' => 'Are you sure you want to delete this group? All associated fields will be deleted.',
+    'No groups found. Create your first group to start organizing custom fields.' => 'No groups found. Create your first group to start organizing custom fields.',
+    'Fields count' => 'Fields count',
+    'View fields' => 'View fields',
+    'Fields in group: %title' => 'Fields in group: %title',
+    'Add a field' => 'Add a field',
+    'Add the first field' => 'Add the first field',
+    'No custom fields in this group yet.' => 'No custom fields in this group yet.',
+    '-- Select a source --' => '-- Select a source --',
+    'The source determines where these custom fields will be available (products, contents, etc.)' => 'The source determines where these custom fields will be available (products, contents, etc.)',
+    'Yes' => 'Yes',
+    'No' => 'No',
+    'Image' => 'Image',
 ];

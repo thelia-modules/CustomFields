@@ -29,6 +29,11 @@
     <table name="custom_field_parent">
         <column name="id"    type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
         <column name="title" type="VARCHAR" size="255"  required="true"/>
+        <column name="source" type="VARCHAR" size="100"  required="true"/>
+
+        <unique>
+            <unique-column name="source"/>
+        </unique>
     </table>
 
     <!-- ===================== -->
@@ -40,9 +45,9 @@
         <column name="title" type="VARCHAR" size="255"  required="true"/>
         <column name="is_international" type="BOOLEAN" required="true" default="true"/>
         <column name="type"  type="ENUM"    valueSet="text,textarea, wysiwyg, content, category, folder, product, image" required="true" default="text"/>
-        <column name="custom_field_parent_id" type="INTEGER" required="false"/>
+        <column name="custom_field_parent_id" type="INTEGER" required="true"/>
 
-        <foreign-key foreignTable="custom_field_parent" onDelete="SET NULL" onUpdate="CASCADE">
+        <foreign-key foreignTable="custom_field_parent" onDelete="CASCADE" onUpdate="CASCADE">
             <reference local="custom_field_parent_id" foreign="id"/>
         </foreign-key>
 
@@ -50,20 +55,6 @@
             <unique-column name="code"/>
         </unique>
     </table>
-
-    <!-- ===================== -->
-    <!-- custom_field_source    -->
-    <!-- ===================== -->
-    <table name="custom_field_source">
-        <column name="custom_field_id" type="INTEGER" required="true" primaryKey="true"/>
-        <column name="source"          type="VARCHAR" size="100" required="true" primaryKey="true"/>
-        <!-- ex: content, product, ... -->
-
-        <foreign-key foreignTable="custom_field" onDelete="CASCADE" onUpdate="CASCADE">
-            <reference local="custom_field_id" foreign="id"/>
-        </foreign-key>
-    </table>
-
 
     <!-- ===================== -->
     <!-- custom_field_value     -->

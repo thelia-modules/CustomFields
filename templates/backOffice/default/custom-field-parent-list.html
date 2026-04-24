@@ -1,0 +1,66 @@
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">{intl l="Groups" d="customfields"}</h3>
+        <div class="pull-right">
+            <a href="{url path='/admin/module/customfields/parent/create'}" class="btn btn-sm btn-success">
+                <i class="glyphicon glyphicon-plus"></i>
+                {intl l="Create a group" d="customfields"}
+            </a>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        {if $parents|@count > 0}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr>
+                        <th>{intl l="ID" d="customfields"}</th>
+                        <th>{intl l="Title" d="customfields"}</th>
+                        <th>{intl l="Source" d="customfields"}</th>
+                        <th>{intl l="Fields count" d="customfields"}</th>
+                        <th class="text-right">{intl l="Actions" d="customfields"}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {foreach from=$parents item=parent}
+                        <tr>
+                            <td>{$parent->getId()}</td>
+                            <td>
+                                <a href="{url path='/admin/module/customfields/list-fields/%id' id=$parent->getId()}" class="btn-link">
+                                    <strong>{$parent->getTitle()}</strong>
+                                </a>
+                            </td>
+                            <td><span class="label label-info">{$parent->getSource()}</span></td>
+                            <td>{$parent->getCustomFields()|@count}</td>
+                            <td class="text-right">
+                                <a href="{url path='/admin/module/customfields/list-fields/%id' id=$parent->getId()}"
+                                   class="btn btn-sm btn-primary"
+                                   title="{intl l='View fields' d='customfields'}">
+                                    <i class="glyphicon glyphicon-list"></i>
+                                    {intl l="View fields" d="customfields"}
+                                </a>
+                                <a href="{url path='/admin/module/customfields/parent/update/%id' id=$parent->getId()}"
+                                   class="btn btn-sm btn-default"
+                                   title="{intl l='Edit' d='customfields'}">
+                                    <i class="glyphicon glyphicon-edit"></i>
+                                </a>
+                                <a href="{url path='/admin/module/customfields/parent/delete/%id' id=$parent->getId()}"
+                                   class="btn btn-sm btn-danger"
+                                   title="{intl l='Delete' d='customfields'}"
+                                   onclick="return confirm('{intl l='Are you sure you want to delete this group? All associated fields will be deleted.' d='customfields'}');">
+                                    <i class="glyphicon glyphicon-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {/foreach}
+                    </tbody>
+                </table>
+            </div>
+        {else}
+            <div class="alert alert-info">
+                {intl l="No groups found. Create your first group to start organizing custom fields." d="customfields"}
+            </div>
+        {/if}
+    </div>
+</div>

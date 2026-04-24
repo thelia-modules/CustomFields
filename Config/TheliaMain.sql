@@ -13,7 +13,9 @@ CREATE TABLE `custom_field_parent`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(255) NOT NULL,
-    PRIMARY KEY (`id`)
+    `source` VARCHAR(100) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `custom_field_parent_u_232ced` (`source`)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
@@ -29,31 +31,13 @@ CREATE TABLE `custom_field`
     `title` VARCHAR(255) NOT NULL,
     `is_international` TINYINT(1) DEFAULT 1 NOT NULL,
     `type` TINYINT DEFAULT 0 NOT NULL,
-    `custom_field_parent_id` INTEGER,
+    `custom_field_parent_id` INTEGER NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE INDEX `custom_field_u_4db226` (`code`),
     INDEX `custom_field_fi_636d31` (`custom_field_parent_id`),
     CONSTRAINT `custom_field_fk_636d31`
         FOREIGN KEY (`custom_field_parent_id`)
         REFERENCES `custom_field_parent` (`id`)
-        ON UPDATE CASCADE
-        ON DELETE SET NULL
-) ENGINE=InnoDB;
-
--- ---------------------------------------------------------------------
--- custom_field_source
--- ---------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `custom_field_source`;
-
-CREATE TABLE `custom_field_source`
-(
-    `custom_field_id` INTEGER NOT NULL,
-    `source` VARCHAR(100) NOT NULL,
-    PRIMARY KEY (`custom_field_id`,`source`),
-    CONSTRAINT `custom_field_source_fk_361737`
-        FOREIGN KEY (`custom_field_id`)
-        REFERENCES `custom_field` (`id`)
         ON UPDATE CASCADE
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -104,6 +88,23 @@ CREATE TABLE `custom_field_image`
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
+-- custom_field_option_page
+-- ---------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `custom_field_option_page`;
+
+CREATE TABLE `custom_field_option_page`
+(
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `title` VARCHAR(255) NOT NULL,
+    `code` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP NULL,
+    `updated_at` TIMESTAMP NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE INDEX `custom_field_option_page_u_4db226` (`code`)
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
 -- custom_field_value_i18n
 -- ---------------------------------------------------------------------
 
@@ -119,23 +120,6 @@ CREATE TABLE `custom_field_value_i18n`
         FOREIGN KEY (`id`)
         REFERENCES `custom_field_value` (`id`)
         ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- ---------------------------------------------------------------------
--- custom_field_option_page
--- ---------------------------------------------------------------------
-
-DROP TABLE IF EXISTS `custom_field_option_page`;
-
-CREATE TABLE `custom_field_option_page`
-(
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `title` VARCHAR(255) NOT NULL,
-    `code` VARCHAR(100) NOT NULL,
-    `created_at` TIMESTAMP NULL,
-    `updated_at` TIMESTAMP NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE INDEX `custom_field_option_page_u_code` (`code`)
 ) ENGINE=InnoDB;
 
 # This restores the fkey checks, after having unset them earlier

@@ -11,8 +11,6 @@ use CustomFields\Model\CustomFieldParent;
 use CustomFields\Model\CustomFieldParentQuery;
 use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldQuery;
-use CustomFields\Model\CustomFieldSource;
-use CustomFields\Model\CustomFieldSourceQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
 use CustomFields\Service\ExportService;
@@ -50,10 +48,11 @@ final class CustomFieldController extends BaseAdminController
             return $response;
         }
 
-        $customFields = CustomFieldQuery::create()->find();
+        // List parents/groups instead of custom fields
+        $parents = CustomFieldParentQuery::create()->orderByTitle()->find();
 
         // Get current tab
-        $currentTab = $this->getRequest()->query->get('current_tab', 'fields');
+        $currentTab = $this->getRequest()->query->get('current_tab', 'groups');
 
 
         $generalValues = [];
@@ -62,9 +61,9 @@ final class CustomFieldController extends BaseAdminController
 
         $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
 
-        // Get all custom fields with 'general' source
+        // Get all custom fields with 'general' source (via parent)
         $generalCustomFields = CustomFieldQuery::create()
-            ->useCustomFieldSourceQuery()
+            ->useCustomFieldParentQuery()
             ->filterBySource('general')
             ->endUse()
             ->find();
@@ -100,7 +99,7 @@ final class CustomFieldController extends BaseAdminController
         $optionPages = CustomFieldOptionPageQuery::create()->orderByTitle()->find();
 
         return $this->render('custom-field-list', [
-            'custom_fields' => $customFields,
+            'parents' => $parents,
             'current_tab' => $currentTab,
             'general_custom_fields' => $generalCustomFields,
             'grouped_general_fields' => $groupedGeneralFields,
@@ -111,8 +110,35 @@ final class CustomFieldController extends BaseAdminController
         ]);
     }
 
-    #[Route(path: '/create', name: 'create', methods: ['GET', 'POST'])]
-    public function createCustomField(): Response
+    #[Route(path: '/list-fields/{parentId}', name: 'list_fields')]
+    public function listFieldsByParent(int $parentId): Response
+    {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::VIEW)) {
+            return $response;
+        }
+
+        $parent = CustomFieldParentQuery::create()->findPk($parentId);
+
+        if (!$parent) {
+            return new RedirectResponse(
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
+                    'error' => Translator::getInstance()->trans('Group not found', [], 'customfields'),
+                ])
+            );
+        }
+
+        $customFields = CustomFieldQuery::create()
+            ->filterByCustomFieldParentId($parentId)
+            ->find();
+
+        return $this->render('custom-fields-by-parent', [
+            'parent' => $parent,
+            'custom_fields' => $customFields,
+        ]);
+    }
+
+    #[Route(path: '/create/{parentId}', name: 'create', methods: ['GET', 'POST'])]
+    public function createCustomField(?int $parentId = null): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::CREATE)) {
             return $response;
@@ -121,8 +147,14 @@ final class CustomFieldController extends BaseAdminController
         // Get all parents for the dropdown
         $parents = CustomFieldParentQuery::create()->find();
 
+        $parent = null;
+        if ($parentId) {
+            $parent = CustomFieldParentQuery::create()->findPk($parentId);
+        }
+
         $form = $this->createForm(CustomFieldForm::getName(), FormType::class, [
             'is_international' => true,
+            'custom_field_parent_id' => $parentId,
         ]);
         $this->getParserContext()->addForm($form);
         $error = null;
@@ -130,11 +162,11 @@ final class CustomFieldController extends BaseAdminController
         try {
             $validatedForm = $this->validateForm($form);
 
-            // Handle new parent creation
             $this->handleSave($validatedForm);
 
+            $redirectParentId = $validatedForm->get('custom_field_parent_id')->getData();
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list-fields/' . $redirectParentId, [
                     'success' => Translator::getInstance()->trans('Custom field created successfully', [], 'customfields'),
                 ])
             );
@@ -150,6 +182,7 @@ final class CustomFieldController extends BaseAdminController
             'error' => $error,
             'custom_field' => null,
             'parents' => $parents,
+            'parent' => $parent,
         ]);
     }
 
@@ -170,15 +203,6 @@ final class CustomFieldController extends BaseAdminController
             );
         }
 
-        // Get existing sources
-        $existingSources = CustomFieldSourceQuery::create()
-            ->filterByCustomFieldId($id)
-            ->find();
-        $sourcesArray = [];
-        foreach ($existingSources as $existingSource) {
-            $sourcesArray[] = $existingSource->getSource();
-        }
-
         // Get all parents for the dropdown
         $parents = CustomFieldParentQuery::create()->find();
 
@@ -188,7 +212,6 @@ final class CustomFieldController extends BaseAdminController
             'code' => $customField->getCode(),
             'type' => $customField->getType(),
             'is_international' => $customField->getIsInternational(),
-            'sources' => $sourcesArray,
             'custom_field_parent_id' => $customField->getCustomFieldParentId(),
         ]);
         $this->getParserContext()->addForm($form);
@@ -198,9 +221,9 @@ final class CustomFieldController extends BaseAdminController
             $validatedForm = $this->validateForm($form);
             $this->handleSave($validatedForm, $customField);
 
-
+            $redirectParentId = $customField->getCustomFieldParentId();
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/list-fields/' . $redirectParentId, [
                     'success' => Translator::getInstance()->trans('Custom field updated successfully', [], 'customfields'),
                 ])
             );
@@ -221,17 +244,8 @@ final class CustomFieldController extends BaseAdminController
 
     private function handleSave(Form $validatedForm, ?CustomField $customField = null)
     {
-        // Handle new parent creation
         $parentId = $validatedForm->get('custom_field_parent_id')->getData();
-        $newParentTitle = $validatedForm->get('new_parent_title')->getData();
 
-        if (!empty($newParentTitle)) {
-            $newParent = new CustomFieldParent();
-            $newParent
-                ->setTitle($newParentTitle)
-                ->save();
-            $parentId = $newParent->getId();
-        }
         if (!$customField) {
             $customField = new CustomField();
         }
@@ -241,24 +255,8 @@ final class CustomFieldController extends BaseAdminController
             ->setCode($validatedForm->get('code')->getData())
             ->setType($validatedForm->get('type')->getData())
             ->setIsInternational($validatedForm->get('is_international')->getData())
-            ->setCustomFieldParentId($parentId ?: null)
+            ->setCustomFieldParentId($parentId)
             ->save();
-
-        // Delete existing sources and save new ones
-        CustomFieldSourceQuery::create()
-            ->filterByCustomFieldId($customField->getId())
-            ->delete();
-
-        $sources = $validatedForm->get('sources')->getData();
-        if (is_array($sources)) {
-            foreach ($sources as $source) {
-                $customFieldSource = new CustomFieldSource();
-                $customFieldSource
-                    ->setCustomFieldId($customField->getId())
-                    ->setSource($source)
-                    ->save();
-            }
-        }
     }
 
     #[Route(path: '/delete/{id}', name: 'delete', methods: ['GET'])]

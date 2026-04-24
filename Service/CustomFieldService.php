@@ -24,24 +24,15 @@ class CustomFieldService
      */
     public function getCustomFieldValue(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): string|int|null
     {
-        // Get the custom field by code
+        // Get the custom field by code and check if its parent has the requested source
         $customField = CustomFieldQuery::create()
             ->filterByCode($code)
+            ->useCustomFieldParentQuery()
+                ->filterBySource($source)
+            ->endUse()
             ->findOne();
 
         if (!$customField) {
-            return null;
-        }
-
-        // Check if the custom field has this source
-        $hasSource = CustomFieldQuery::create()
-            ->filterById($customField->getId())
-            ->useCustomFieldSourceQuery()
-                ->filterBySource($source)
-            ->endUse()
-            ->count() > 0;
-
-        if (!$hasSource) {
             return null;
         }
 
