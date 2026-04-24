@@ -11,9 +11,9 @@
 
 {block name="main-content"}
 
-    {if $error}
+    {if isset($smarty.get.error) && !empty($smarty.get.error)}
         <div class="alert alert-danger">
-            {$error}
+            {$smarty.get.error}
         </div>
     {/if}
 
@@ -21,7 +21,6 @@
         {form name="customfields_form_custom_field"}
             <form
                 method="POST"
-                action="{if $custom_field}{url path='/admin/module/customfields/update/%id' id=$custom_field->getId()}{else}{url path='/admin/module/customfields/create'}{/if}"
                 {form_enctype}
                 class="clearfix customfield-form"
             >
@@ -314,7 +313,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const noInternational = ['content', 'category', 'folder', 'product' , 'image'];
+            const noInternational = ['content', 'category', 'folder', 'product', 'image', 'checkbox'];
             const isInternational = document.querySelector('#custom_field_is_international');
             const type = document.querySelector('#custom_field_type');
             console.log(noInternational);

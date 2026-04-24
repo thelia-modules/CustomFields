@@ -12,9 +12,9 @@ ALTER TABLE `custom_field` ADD COLUMN `position` INTEGER DEFAULT 0;
 
 ALTER TABLE `custom_field_value` ADD COLUMN `repeater_row_id` INTEGER;
 
-ALTER TABLE `custom_field_value` ADD INDEX `idx_cfv_repeater_row` (`repeater_row_id`);
+ALTER TABLE `custom_field_value` ADD INDEX `custom_field_value_fi_18014d` (`repeater_row_id`),;
 
-ALTER TABLE `custom_field_value` ADD CONSTRAINT `custom_field_value_fk_repeater_row`
+ALTER TABLE `custom_field_value` CONSTRAINT `custom_field_value_fk_18014d`
     FOREIGN KEY (`repeater_row_id`)
     REFERENCES `custom_field_repeater_row` (`id`)
     ON UPDATE CASCADE
@@ -40,5 +40,8 @@ CREATE TABLE IF NOT EXISTS `custom_field_repeater_row`
         ON UPDATE CASCADE
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+ALTER TABLE `custom_field` DROP FOREIGN KEY `custom_field_fk_636d31`;
+ALTER TABLE `custom_field` DROP INDEX `custom_field_u_4db226`;
 
 SET FOREIGN_KEY_CHECKS = 1;

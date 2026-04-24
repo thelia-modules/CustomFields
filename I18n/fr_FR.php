@@ -30,6 +30,7 @@ return [
     'Text' => 'Texte',
     'Textarea' => 'Zone de texte',
     'Wysiwyg' => 'Éditeur WYSIWYG',
+    'Checkbox' => 'Case à cocher',
     'Number' => 'Nombre',
     'Date' => 'Date',
     'Boolean' => 'Booléen',
@@ -86,7 +87,8 @@ return [
     'Enter a new parent group name' => 'Entrez un nom de groupe parent',
     'International' => 'International',
     'Check to allow translation of the field' => 'Cochez pour permettre la traduction du champ',
-
+    'Option Page' => 'Page Options',
+    'Option Pages' => 'Pages Options',
     // Repeater
     'Repeater' => 'Répéteur',
     'Add row' => 'Ajouter une ligne',
@@ -96,4 +98,8 @@ return [
     'Create sub-field' => 'Créer un sous-champ',
     '+ Add sub-field' => '+ Ajouter un sous-champ',
     'No sub-fields defined for this repeater. Click the button above to add one.' => 'Aucun sous-champ défini pour ce répétiteur. Cliquez sur le bouton ci-dessus pour en ajouter un.',
+
+    // Code validation
+    'This code already exists. Please choose another code.' => 'Ce code existe déjà. Veuillez choisir un autre code.',
+    'This code already exists in this repeater. Please choose another code.' => 'Ce code existe déjà dans ce répéteur. Veuillez choisir un autre code.',
 ];

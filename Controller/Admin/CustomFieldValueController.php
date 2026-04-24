@@ -36,7 +36,8 @@ final class CustomFieldValueController extends BaseAdminController
         CustomFieldTableMap::COL_TYPE_CONTENT,
         CustomFieldTableMap::COL_TYPE_CATEGORY,
         CustomFieldTableMap::COL_TYPE_FOLDER,
-        CustomFieldTableMap::COL_TYPE_PRODUCT
+        CustomFieldTableMap::COL_TYPE_PRODUCT,
+        CustomFieldTableMap::COL_TYPE_CHECKBOX ?? 'checkbox'
     ];
 
     #[Route(path: '/values/save', name: 'values_save', methods: ['POST'])]
@@ -283,10 +284,12 @@ final class CustomFieldValueController extends BaseAdminController
         \CustomFields\Model\CustomField $customField,
         string $source,
         ?int $sourceId,
-        string $locale
+        string $locale,
+        string $parentPath = 'custom_field',
+        ?int $parentRepeaterRowId = null
     ): void {
         $repeaterId = $customField->getId();
-        $fieldKey = 'custom_field_' . $repeaterId;
+        $fieldKey = $parentPath . '_' . $repeaterId;
         $rowsKey = $fieldKey . '_rows';
 
         if (!$this->getRequest()->request->has($rowsKey)) {
@@ -295,11 +298,14 @@ final class CustomFieldValueController extends BaseAdminController
 
         $rowCount = (int) $this->getRequest()->request->get($rowsKey, 0);
 
-        $existingRows = CustomFieldRepeaterRowQuery::create()
+        // Récupérer les lignes existantes
+        $existingRowsQuery = CustomFieldRepeaterRowQuery::create()
             ->filterByCustomFieldId($repeaterId)
             ->filterBySource($source)
-            ->filterBySourceId($sourceId)
-            ->find();
+            ->filterBySourceId($sourceId);
+
+
+        $existingRows = $existingRowsQuery->find();
 
         $existingRowIds = [];
         foreach ($existingRows as $row) {
@@ -308,6 +314,7 @@ final class CustomFieldValueController extends BaseAdminController
 
         $newRowIds = [];
 
+        // Créer/mettre à jour les lignes
         for ($rowIndex = 0; $rowIndex < $rowCount; $rowIndex++) {
             $existingRowId = (int) $this->getRequest()->request->get(
                 $fieldKey . '_' . $rowIndex . '_row_id',
@@ -324,6 +331,7 @@ final class CustomFieldValueController extends BaseAdminController
                 $repeaterRow->setCustomFieldId($repeaterId);
                 $repeaterRow->setSource($source);
                 $repeaterRow->setSourceId($sourceId);
+
             }
 
             $repeaterRow->setPosition($rowIndex);
@@ -332,6 +340,7 @@ final class CustomFieldValueController extends BaseAdminController
             $newRowIds[] = $repeaterRow->getId();
         }
 
+        // Supprimer les lignes qui ne sont plus présentes
         $rowsToDelete = array_diff($existingRowIds, $newRowIds);
         if (!empty($rowsToDelete)) {
             CustomFieldRepeaterRowQuery::create()
@@ -339,20 +348,38 @@ final class CustomFieldValueController extends BaseAdminController
                 ->delete();
         }
 
+        // Charger les sous-champs
         $subFields = CustomFieldQuery::create()
             ->filterByCustomFieldParentId($repeaterId)
             ->orderByPosition()
             ->find();
 
+        // Traiter chaque ligne
         for ($rowIndex = 0; $rowIndex < $rowCount; $rowIndex++) {
             $repeaterRowId = $newRowIds[$rowIndex] ?? null;
             if (!$repeaterRowId) {
                 continue;
             }
 
-            foreach ($subFields as $subField) {
-                $subFieldKey = $fieldKey . '_' . $rowIndex . '_' . $subField->getId();
+            $currentRowPath = $fieldKey . '_' . $rowIndex;
 
+            foreach ($subFields as $subField) {
+                // Si c'est un sous-repeater, le traiter récursivement
+                if ($subField->getType() === 'repeater') {
+                    $this->handleRepeaterField(
+                        $subField,
+                        $source,
+                        $sourceId,
+                        $locale,
+                        $currentRowPath,
+                        $repeaterRowId
+                    );
+                    continue;
+                }
+
+                $subFieldKey = $currentRowPath . '_' . $subField->getId();
+
+                // Gérer les images
                 if ($subField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
                     if (!$this->getRequest()->files->has($subFieldKey)) {
                         continue;
@@ -403,6 +430,7 @@ final class CustomFieldValueController extends BaseAdminController
                     continue;
                 }
 
+                // Gérer les autres types de champs
                 $value = $this->getRequest()->request->get($subFieldKey);
 
                 if (null === $value) {

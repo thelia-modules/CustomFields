@@ -30,6 +30,7 @@ return [
     'Text' => 'Text',
     'Textarea' => 'Textarea',
     'Wysiwyg' => 'WYSIWYG Editor',
+    'Checkbox' => 'Checkbox',
     'Number' => 'Number',
     'Date' => 'Date',
     'Boolean' => 'Boolean',
@@ -95,4 +96,8 @@ return [
     'Create sub-field' => 'Create sub-field',
     '+ Add sub-field' => '+ Add sub-field',
     'No sub-fields defined for this repeater. Click the button above to add one.' => 'No sub-fields defined for this repeater. Click the button above to add one.',
+
+    // Code validation
+    'This code already exists. Please choose another code.' => 'This code already exists. Please choose another code.',
+    'This code already exists in this repeater. Please choose another code.' => 'This code already exists in this repeater. Please choose another code.',
 ];

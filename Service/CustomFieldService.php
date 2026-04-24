@@ -155,34 +155,78 @@ class CustomFieldService
             $rowData = [];
 
             foreach ($subFields as $subField) {
-                $value = CustomFieldValueQuery::create()
-                    ->filterByCustomFieldId($subField->getId())
-                    ->filterBySource($source)
-                    ->filterBySourceId($sourceId)
-                    ->filterByRepeaterRowId($rowId)
-                    ->findOne();
+                $rowData[$subField->getCode()] = $this->getFieldValue($subField, $source, $sourceId, $rowId, $locale);
+            }
 
-                if ($value) {
-                    if ($subField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
-                        $image = $value->getCustomFieldImages()->getFirst();
-                        if ($image && $image->getFile()) {
-                            [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
-                            $rowData[$subField->getCode()] = $fileUrl ?? null;
-                        } else {
-                            $rowData[$subField->getCode()] = null;
-                        }
-                    } elseif (
-                        in_array($subField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)
-                        || !$subField->isInternational()
-                    ) {
-                        $rowData[$subField->getCode()] = $value->getSimpleValue();
-                    } else {
-                        $value->setLocale($locale);
-                        $rowData[$subField->getCode()] = $value->getValue();
-                    }
-                } else {
-                    $rowData[$subField->getCode()] = null;
-                }
+            $result[] = $rowData;
+        }
+
+        return $result;
+    }
+
+    private function getFieldValue($subField, string $source, ?int $sourceId, int $rowId, string $locale)
+    {
+        // Si c'est un repeater, traiter récursivement
+        if ($subField->getType() === 'repeater') {
+            return $this->getNestedRepeaterValues($subField, $source, $sourceId, $rowId, $locale);
+        }
+
+        $value = CustomFieldValueQuery::create()
+            ->filterByCustomFieldId($subField->getId())
+            ->filterBySource($source)
+            ->filterBySourceId($sourceId)
+            ->filterByRepeaterRowId($rowId)
+            ->findOne();
+
+        if (!$value) {
+            return null;
+        }
+
+        if ($subField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
+            $image = $value->getCustomFieldImages()->getFirst();
+            if ($image && $image->getFile()) {
+                [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
+                return $fileUrl ?? null;
+            }
+            return null;
+        }
+
+        if (
+            in_array($subField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)
+            || !$subField->isInternational()
+        ) {
+            return $value->getSimpleValue();
+        }
+
+        $value->setLocale($locale);
+        return $value->getValue();
+    }
+
+    private function getNestedRepeaterValues($parentField, string $source, ?int $sourceId, int $parentRowId, string $locale): array
+    {
+        $subFields = CustomFieldQuery::create()
+            ->filterByCustomFieldParentId($parentField->getId())
+            ->orderByPosition()
+            ->find();
+
+        if ($subFields->isEmpty()) {
+            return [];
+        }
+
+        $rows = CustomFieldRepeaterRowQuery::create()
+            ->filterByCustomFieldId($parentField->getId())
+            ->filterBySource($source)
+            ->filterBySourceId($sourceId)
+            ->orderByPosition()
+            ->find();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $rowId = $row->getId();
+            $rowData = [];
+
+            foreach ($subFields as $subField) {
+                $rowData[$subField->getCode()] = $this->getFieldValue($subField, $source, $sourceId, $rowId, $locale);
             }
 
             $result[] = $rowData;

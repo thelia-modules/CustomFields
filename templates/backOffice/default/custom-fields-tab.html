@@ -29,7 +29,14 @@
             }
 
             {if $custom_fields|@count > 0}
-                {include file="./includes/fields-list.html" source=$currentSource}
+                {include file="./includes/fields-list.html"
+                    source=$currentSource
+                    grouped_fields=$grouped_fields
+                    values=$values
+                    value_ids=$value_ids
+                    repeater_values=$repeater_values
+                    repeater_subfields=$repeater_subfields
+                }
 
                 {* Bottom toolbar *}
                 {include file="includes/inner-form-toolbar.html"

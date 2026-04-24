@@ -105,6 +105,7 @@ final class CustomFieldForm extends BaseForm
                         Translator::getInstance()->trans('Text', [], 'customfields') => CustomFieldTableMap::COL_TYPE_TEXT,
                         Translator::getInstance()->trans('Textarea', [], 'customfields') => CustomFieldTableMap::COL_TYPE_TEXTAREA,
                         Translator::getInstance()->trans('Wysiwyg', [], 'customfields') => CustomFieldTableMap::COL_TYPE_WYSIWYG,
+                        Translator::getInstance()->trans('Checkbox', [], 'customfields') => CustomFieldTableMap::COL_TYPE_CHECKBOX ?? 'checkbox',
                         Translator::getInstance()->trans('Content', [], 'customfields') => CustomFieldTableMap::COL_TYPE_CONTENT,
                         Translator::getInstance()->trans('Category', [], 'customfields') => CustomFieldTableMap::COL_TYPE_CATEGORY,
                         Translator::getInstance()->trans('Folder', [], 'customfields') => CustomFieldTableMap::COL_TYPE_FOLDER,

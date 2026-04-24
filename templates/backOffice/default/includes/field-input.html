@@ -1,0 +1,78 @@
+{*
+    Include pour afficher les champs de saisie simples
+    Variables attendues:
+    - $field_type : le type de champ
+    - $field_name : le nom du champ (attribut name)
+    - $field_value : la valeur actuelle
+    - $sub_field : l'objet CustomField
+*}
+
+{if $field_type == 'text'}
+    <input type="text"
+           name="{$field_name}"
+           class="form-control"
+           value="{$field_value}" />
+
+{elseif $field_type == 'textarea'}
+    <textarea name="{$field_name}"
+              class="form-control"
+              rows="3">{$field_value}</textarea>
+
+{elseif $field_type == 'wysiwyg'}
+    <textarea name="{$field_name}"
+              class="form-control wysiwyg"
+              rows="3">{$field_value}</textarea>
+
+{elseif $field_type == 'checkbox'}
+    <input type="hidden"
+           name="{$field_name}"
+           value="0" />
+    <input type="checkbox"
+           name="{$field_name}"
+           value="1"
+           {if $field_value == '1'}checked{/if} />
+
+{elseif $field_type == 'image'}
+    <div style="display: flex; align-items: center; gap: 10px;">
+        {if $field_value && $field_value.url}
+            <div style="position: relative; display: inline-block;">
+                <img src="{$field_value.url}" alt="{$sub_field->getTitle()}" style="width: 150px; height: 150px; object-fit: contain; display: block;" />
+                <a href="{url path='/admin/module/customfields/image/delete/'|cat:$field_value.id}"
+                   class="btn btn-danger btn-xs delete-custom-field-image"
+                   style="position: absolute; top: 5px; right: 5px; padding: 2px 6px;"
+                   data-confirm="{intl l='Are you sure you want to delete this image?' d='customfields'}"
+                   title="{intl l='Delete image' d='customfields'}">
+                    <i class="glyphicon glyphicon-remove"></i>
+                </a>
+            </div>
+        {/if}
+        <input type="file"
+               name="{$field_name}"
+               class="form-control"
+               accept="image/*" />
+    </div>
+
+{elseif in_array($field_type, ['content', 'category', 'folder', 'product'])}
+    <input type="number"
+           name="{$field_name}"
+           class="form-control"
+           value="{$field_value}" />
+    {if $field_value}
+        {if $field_type == 'content'}
+            <a href="/admin/content/update/{$field_value}" target="_blank">Voir le contenu</a>
+        {elseif $field_type == 'category'}
+            <a href="/admin/categories/update?category_id={$field_value}" target="_blank">Voir la catégorie</a>
+        {elseif $field_type == 'folder'}
+            <a href="/admin/folders/update/{$field_value}" target="_blank">Voir le dossier</a>
+        {elseif $field_type == 'product'}
+            <a href="/admin/products/update/?product_id={$field_value}" target="_blank">Voir le produit</a>
+        {/if}
+    {/if}
+
+{else}
+    <input type="text"
+           name="{$field_name}"
+           class="form-control"
+           value="{$field_value}"
+           placeholder="Type de champ non supporté: {$field_type}" />
+{/if}

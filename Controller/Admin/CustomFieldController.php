@@ -16,8 +16,9 @@ use CustomFields\Model\CustomFieldSource;
 use CustomFields\Model\CustomFieldSourceQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
+use CustomFields\Service\CustomFieldValidationService;
 use CustomFields\Service\ExportService;
-use CustomFields\Service\ImageService;
+use CustomFields\Service\RepeaterDataLoaderService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
@@ -31,7 +32,6 @@ use Thelia\Controller\Admin\BaseAdminController;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Translation\Translator;
-use Thelia\Exception\TheliaProcessException;
 use Thelia\Form\Exception\FormValidationException;
 use Thelia\Log\Tlog;
 use Thelia\Model\LangQuery;
@@ -41,13 +41,12 @@ use Thelia\Tools\URL;
 #[Route(path: '/admin/module/customfields', name: 'customfields_')]
 final class CustomFieldController extends BaseAdminController
 {
-    private ImageService $imageService;
-
     public function __construct(
         private readonly CustomFieldSortingService $sortingService,
-        private readonly EventDispatcherInterface $dispatcher
+        private readonly EventDispatcherInterface $dispatcher,
+        private readonly CustomFieldValidationService $validationService,
+        private readonly RepeaterDataLoaderService $repeaterDataLoader
     ) {
-        $this->imageService = new ImageService($this->dispatcher);
     }
 
     #[Route(path: '/list', name: 'list')]
@@ -104,75 +103,7 @@ final class CustomFieldController extends BaseAdminController
         // Group general fields by parent
         $groupedGeneralFields = $this->sortingService->groupByParent($generalCustomFields);
 
-        $generalRepeaterValues = [];
-        $generalRepeaterSubfields = [];
-        $source = 'general';
-
-        foreach ($generalCustomFields as $customField) {
-            if ($customField->getType() !== 'repeater') {
-                continue;
-            }
-
-            $repeaterId = $customField->getId();
-
-            $subFields = CustomFieldQuery::create()
-                ->filterByCustomFieldParentId($repeaterId)
-                ->orderByPosition()
-                ->find();
-
-            $generalRepeaterSubfields[$repeaterId] = $subFields;
-
-            $rows = CustomFieldRepeaterRowQuery::create()
-                ->filterByCustomFieldId($repeaterId)
-                ->filterBySource($source)
-                ->filterBySourceId(null)
-                ->orderByPosition()
-                ->find();
-
-            $rowData = [];
-            foreach ($rows as $row) {
-                $rowId = $row->getId();
-                $rowValues = [];
-
-                foreach ($subFields as $subField) {
-                    $value = CustomFieldValueQuery::create()
-                        ->filterByCustomFieldId($subField->getId())
-                        ->filterBySource($source)
-                        ->filterBySourceId(null)
-                        ->filterByRepeaterRowId($rowId)
-                        ->findOne();
-
-                    if ($value) {
-                        if ($subField->getType() === 'image') {
-                            $image = $value->getCustomFieldImages()->getFirst();
-                            if ($image && $image->getFile()) {
-                                [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
-                                $rowValues[$subField->getId()] = [
-                                    'id'  => $image->getId(),
-                                    'url' => $fileUrl ?? '',
-                                ];
-                            } else {
-                                $rowValues[$subField->getId()] = null;
-                            }
-                        } elseif (
-                            in_array($subField->getType(), ['content', 'category', 'folder', 'product'])
-                            || !$subField->isInternational()
-                        ) {
-                            $rowValues[$subField->getId()] = $value->getSimpleValue();
-                        } else {
-                            $value->setLocale($locale);
-                            $rowValues[$subField->getId()] = $value->getValue();
-                        }
-                    } else {
-                        $rowValues[$subField->getId()] = '';
-                    }
-                }
-
-                $rowData[] = ['__row_id' => $rowId] + $rowValues;
-            }
-
-            $generalRepeaterValues[$repeaterId] = $rowData;
-        }
+        [$generalRepeaterValues, $generalRepeaterSubfields] = $this->repeaterDataLoader->loadRepeaterData($generalCustomFields, 'general', null, $locale);
 
         // Build subfield → repeater map for the listing
         $repeaterFields = CustomFieldQuery::create()->filterByType('repeater')->find();
@@ -263,8 +194,16 @@ final class CustomFieldController extends BaseAdminController
             $parentRepeater = CustomFieldQuery::create()->findPk($parentId);
         }
 
+        if ($error) {
+            $data = ['error' => $error];
+            if ($parentId) {
+                $data['parent_repeater_id'] = $parentId;
+            }
+            return new RedirectResponse(
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/create',$data)
+            );
+        }
         return $this->render('custom-field-form', [
-            'error' => $error,
             'custom_field' => null,
             'parents' => $parents,
             'sub_fields' => [],
@@ -375,9 +314,21 @@ final class CustomFieldController extends BaseAdminController
             $customField = new CustomField();
         }
 
+        // Validate code uniqueness
+        $code = $validatedForm->get('code')->getData();
+        $customFieldId = $customField->getId(); // null if creation
+
+
+        if (!$this->validationService->isCodeUnique($code, $customFieldId, $parentId)) {
+            $errorMessage = $this->validationService->getErrorMessage($parentId);
+            throw new FormValidationException(
+                Translator::getInstance()->trans($errorMessage, [], 'customfields')
+            );
+        }
+
         $customField
             ->setTitle($validatedForm->get('title')->getData())
-            ->setCode($validatedForm->get('code')->getData())
+            ->setCode($code)
             ->setType($validatedForm->get('type')->getData())
             ->setIsInternational($validatedForm->get('is_international')->getData())
             ->setCustomFieldParentId($parentId ?: null)

@@ -39,16 +39,13 @@
         <column name="code"  type="VARCHAR" size="100"  required="true"/>
         <column name="title" type="VARCHAR" size="255"  required="true"/>
         <column name="is_international" type="BOOLEAN" required="true" default="true"/>
-        <column name="type"  type="ENUM"    valueSet="text,textarea,wysiwyg,content,category,folder,product,image,repeater" required="true" default="text"/>
+        <column name="type"  type="ENUM"    valueSet="text,textarea,wysiwyg,content,category,folder,product,image,repeater,checkbox" required="true" default="text"/>
         <column name="position" type="INTEGER" required="false" default="0"/>
         <column name="custom_field_parent_id" type="INTEGER" required="false"/>
 
         <!-- No FK on custom_field_parent_id: can reference custom_field_parent.id (grouping)
              OR custom_field.id (repeater sub-field parent) -->
 
-        <unique>
-            <unique-column name="code"/>
-        </unique>
     </table>
 
     <!-- ===================== -->

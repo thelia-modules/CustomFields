@@ -31,14 +31,7 @@ CREATE TABLE `custom_field`
     `type` TINYINT DEFAULT 0 NOT NULL,
     `position` INTEGER DEFAULT 0,
     `custom_field_parent_id` INTEGER,
-    PRIMARY KEY (`id`),
-    UNIQUE INDEX `custom_field_u_4db226` (`code`),
-    INDEX `custom_field_fi_636d31` (`custom_field_parent_id`),
-    CONSTRAINT `custom_field_fk_636d31`
-        FOREIGN KEY (`custom_field_parent_id`)
-        REFERENCES `custom_field_parent` (`id`)
-        ON UPDATE CASCADE
-        ON DELETE SET NULL
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------
