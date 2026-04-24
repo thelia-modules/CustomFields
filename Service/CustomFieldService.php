@@ -6,12 +6,20 @@ namespace CustomFields\Service;
 
 use CustomFields\Controller\Admin\CustomFieldValueController;
 use CustomFields\Model\CustomFieldQuery;
+use CustomFields\Model\CustomFieldRepeaterRowQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Model\Map\CustomFieldTableMap;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Model\LangQuery;
 
 class CustomFieldService
 {
+    private ImageService $imageService;
+
+    public function __construct(EventDispatcherInterface $dispatcher)
+    {
+        $this->imageService = new ImageService($dispatcher);
+    }
     /**
      * Get custom field value by code, source, source_id and locale.
      *
@@ -97,6 +105,134 @@ class CustomFieldService
         }
 
         return $this->getCustomFieldValue($code, $source, $sourceId, $lang->getLocale());
+    }
+
+    public function getRepeaterValues(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): array
+    {
+        $customField = CustomFieldQuery::create()
+            ->filterByCode($code)
+            ->filterByType('repeater')
+            ->findOne();
+
+        if (!$customField) {
+            return [];
+        }
+
+        if (null === $locale) {
+            $locale = LangQuery::create()->findOneById(1)?->getLocale() ?? 'en_US';
+        }
+
+        $hasSource = CustomFieldQuery::create()
+            ->filterById($customField->getId())
+            ->useCustomFieldSourceQuery()
+                ->filterBySource($source)
+            ->endUse()
+            ->count() > 0;
+
+        if (!$hasSource) {
+            return [];
+        }
+
+        $subFields = CustomFieldQuery::create()
+            ->filterByCustomFieldParentId($customField->getId())
+            ->orderByPosition()
+            ->find();
+
+        if ($subFields->isEmpty()) {
+            return [];
+        }
+
+        $rows = CustomFieldRepeaterRowQuery::create()
+            ->filterByCustomFieldId($customField->getId())
+            ->filterBySource($source)
+            ->filterBySourceId($sourceId)
+            ->orderByPosition()
+            ->find();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $rowId = $row->getId();
+            $rowData = [];
+
+            foreach ($subFields as $subField) {
+                $rowData[$subField->getCode()] = $this->getFieldValue($subField, $source, $sourceId, $rowId, $locale);
+            }
+
+            $result[] = $rowData;
+        }
+
+        return $result;
+    }
+
+    private function getFieldValue($subField, string $source, ?int $sourceId, int $rowId, string $locale)
+    {
+        // Si c'est un repeater, traiter récursivement
+        if ($subField->getType() === 'repeater') {
+            return $this->getNestedRepeaterValues($subField, $source, $sourceId, $rowId, $locale);
+        }
+
+        $value = CustomFieldValueQuery::create()
+            ->filterByCustomFieldId($subField->getId())
+            ->filterBySource($source)
+            ->filterBySourceId($sourceId)
+            ->filterByRepeaterRowId($rowId)
+            ->findOne();
+
+        if (!$value) {
+            return null;
+        }
+
+        if ($subField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
+            $image = $value->getCustomFieldImages()->getFirst();
+            if ($image && $image->getFile()) {
+                [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
+                return $fileUrl ?? null;
+            }
+            return null;
+        }
+
+        if (
+            in_array($subField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)
+            || !$subField->isInternational()
+        ) {
+            return $value->getSimpleValue();
+        }
+
+        $value->setLocale($locale);
+        return $value->getValue();
+    }
+
+    private function getNestedRepeaterValues($parentField, string $source, ?int $sourceId, int $parentRowId, string $locale): array
+    {
+        $subFields = CustomFieldQuery::create()
+            ->filterByCustomFieldParentId($parentField->getId())
+            ->orderByPosition()
+            ->find();
+
+        if ($subFields->isEmpty()) {
+            return [];
+        }
+
+        $rows = CustomFieldRepeaterRowQuery::create()
+            ->filterByCustomFieldId($parentField->getId())
+            ->filterBySource($source)
+            ->filterBySourceId($sourceId)
+            ->orderByPosition()
+            ->find();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $rowId = $row->getId();
+            $rowData = [];
+
+            foreach ($subFields as $subField) {
+                $rowData[$subField->getCode()] = $this->getFieldValue($subField, $source, $sourceId, $rowId, $locale);
+            }
+
+            $result[] = $rowData;
+        }
+
+        return $result;
     }
 
 }

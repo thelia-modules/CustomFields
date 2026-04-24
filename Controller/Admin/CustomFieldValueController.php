@@ -9,6 +9,8 @@ use CustomFields\Model\CustomFieldImage;
 use CustomFields\Model\CustomFieldImageQuery;
 use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldQuery;
+use CustomFields\Model\CustomFieldRepeaterRow;
+use CustomFields\Model\CustomFieldRepeaterRowQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Model\Map\CustomFieldTableMap;
 use Propel\Runtime\Exception\PropelException;
@@ -34,7 +36,8 @@ final class CustomFieldValueController extends BaseAdminController
         CustomFieldTableMap::COL_TYPE_CONTENT,
         CustomFieldTableMap::COL_TYPE_CATEGORY,
         CustomFieldTableMap::COL_TYPE_FOLDER,
-        CustomFieldTableMap::COL_TYPE_PRODUCT
+        CustomFieldTableMap::COL_TYPE_PRODUCT,
+        CustomFieldTableMap::COL_TYPE_CHECKBOX ?? 'checkbox'
     ];
 
     #[Route(path: '/values/save', name: 'values_save', methods: ['POST'])]
@@ -63,6 +66,12 @@ final class CustomFieldValueController extends BaseAdminController
 
             foreach ($customFields as $customField) {
                 $fieldKey = 'custom_field_'.$customField->getId();
+
+                // Handle repeater type
+                if ($customField->getType() === 'repeater') {
+                    $this->handleRepeaterField($customField, $source, $sourceId, $locale);
+                    continue;
+                }
 
                 // Handle image type separately
                 if ($customField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
@@ -125,12 +134,19 @@ final class CustomFieldValueController extends BaseAdminController
                     $value = $this->getRequest()->request->get($fieldKey);
 
                     if (null !== $value) {
-                        // Find or create custom field value
                         $customFieldValue = CustomFieldValueQuery::create()
                             ->filterByCustomFieldId($customField->getId())
                             ->filterBySource($source)
                             ->filterBySourceId($sourceId)
-                            ->findOneOrCreate();
+                            ->filterByRepeaterRowId(null)
+                            ->findOne();
+
+                        if (!$customFieldValue) {
+                            $customFieldValue = new \CustomFields\Model\CustomFieldValue();
+                            $customFieldValue->setCustomFieldId($customField->getId());
+                            $customFieldValue->setSource($source);
+                            $customFieldValue->setSourceId($sourceId);
+                        }
 
                         if (
                             in_array($customField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES) ||
@@ -261,6 +277,187 @@ final class CustomFieldValueController extends BaseAdminController
                     'error' => Translator::getInstance()->trans('An error occurred while deleting the image', [], 'customfields'),
                 ])
             );
+        }
+    }
+
+    private function handleRepeaterField(
+        \CustomFields\Model\CustomField $customField,
+        string $source,
+        ?int $sourceId,
+        string $locale,
+        string $parentPath = 'custom_field',
+        ?int $parentRepeaterRowId = null
+    ): void {
+        $repeaterId = $customField->getId();
+        $fieldKey = $parentPath . '_' . $repeaterId;
+        $rowsKey = $fieldKey . '_rows';
+
+        if (!$this->getRequest()->request->has($rowsKey)) {
+            return;
+        }
+
+        $rowCount = (int) $this->getRequest()->request->get($rowsKey, 0);
+
+        // Récupérer les lignes existantes
+        $existingRowsQuery = CustomFieldRepeaterRowQuery::create()
+            ->filterByCustomFieldId($repeaterId)
+            ->filterBySource($source)
+            ->filterBySourceId($sourceId);
+
+
+        $existingRows = $existingRowsQuery->find();
+
+        $existingRowIds = [];
+        foreach ($existingRows as $row) {
+            $existingRowIds[] = $row->getId();
+        }
+
+        $newRowIds = [];
+
+        // Créer/mettre à jour les lignes
+        for ($rowIndex = 0; $rowIndex < $rowCount; $rowIndex++) {
+            $existingRowId = (int) $this->getRequest()->request->get(
+                $fieldKey . '_' . $rowIndex . '_row_id',
+                0
+            );
+
+            $repeaterRow = null;
+            if ($existingRowId > 0) {
+                $repeaterRow = CustomFieldRepeaterRowQuery::create()->findPk($existingRowId);
+            }
+
+            if (!$repeaterRow) {
+                $repeaterRow = new CustomFieldRepeaterRow();
+                $repeaterRow->setCustomFieldId($repeaterId);
+                $repeaterRow->setSource($source);
+                $repeaterRow->setSourceId($sourceId);
+
+            }
+
+            $repeaterRow->setPosition($rowIndex);
+            $repeaterRow->save();
+
+            $newRowIds[] = $repeaterRow->getId();
+        }
+
+        // Supprimer les lignes qui ne sont plus présentes
+        $rowsToDelete = array_diff($existingRowIds, $newRowIds);
+        if (!empty($rowsToDelete)) {
+            CustomFieldRepeaterRowQuery::create()
+                ->filterById($rowsToDelete)
+                ->delete();
+        }
+
+        // Charger les sous-champs
+        $subFields = CustomFieldQuery::create()
+            ->filterByCustomFieldParentId($repeaterId)
+            ->orderByPosition()
+            ->find();
+
+        // Traiter chaque ligne
+        for ($rowIndex = 0; $rowIndex < $rowCount; $rowIndex++) {
+            $repeaterRowId = $newRowIds[$rowIndex] ?? null;
+            if (!$repeaterRowId) {
+                continue;
+            }
+
+            $currentRowPath = $fieldKey . '_' . $rowIndex;
+
+            foreach ($subFields as $subField) {
+                // Si c'est un sous-repeater, le traiter récursivement
+                if ($subField->getType() === 'repeater') {
+                    $this->handleRepeaterField(
+                        $subField,
+                        $source,
+                        $sourceId,
+                        $locale,
+                        $currentRowPath,
+                        $repeaterRowId
+                    );
+                    continue;
+                }
+
+                $subFieldKey = $currentRowPath . '_' . $subField->getId();
+
+                // Gérer les images
+                if ($subField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
+                    if (!$this->getRequest()->files->has($subFieldKey)) {
+                        continue;
+                    }
+
+                    /** @var UploadedFile|null $uploadedFile */
+                    $uploadedFile = $this->getRequest()->files->get($subFieldKey);
+                    if (!$uploadedFile instanceof UploadedFile || $uploadedFile->getError() !== UPLOAD_ERR_OK) {
+                        continue;
+                    }
+
+                    try {
+                        $uploadDir = THELIA_LOCAL_DIR . 'media' . DS . 'images' . DS . 'customField';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+
+                        $fileName = uniqid() . '_' . $uploadedFile->getClientOriginalName();
+                        $uploadedFile->move($uploadDir, $fileName);
+
+                        $customFieldValue = CustomFieldValueQuery::create()
+                            ->filterByCustomFieldId($subField->getId())
+                            ->filterBySource($source)
+                            ->filterBySourceId($sourceId)
+                            ->filterByRepeaterRowId($repeaterRowId)
+                            ->findOneOrCreate();
+                        $customFieldValue->save();
+
+                        $existingImage = CustomFieldImageQuery::create()
+                            ->filterByCustomFieldValueId($customFieldValue->getId())
+                            ->findOne();
+
+                        if (!$existingImage) {
+                            $existingImage = new CustomFieldImage();
+                            $existingImage->setCustomFieldValueId($customFieldValue->getId());
+                        } else {
+                            $oldFile = $uploadDir . DS . $existingImage->getFile();
+                            if (file_exists($oldFile)) {
+                                unlink($oldFile);
+                            }
+                        }
+
+                        $existingImage->setFile($fileName);
+                        $existingImage->save();
+                    } catch (\Exception $e) {
+                        // Skip on error
+                    }
+                    continue;
+                }
+
+                // Gérer les autres types de champs
+                $value = $this->getRequest()->request->get($subFieldKey);
+
+                if (null === $value) {
+                    continue;
+                }
+
+                $customFieldValue = CustomFieldValueQuery::create()
+                    ->filterByCustomFieldId($subField->getId())
+                    ->filterBySource($source)
+                    ->filterBySourceId($sourceId)
+                    ->filterByRepeaterRowId($repeaterRowId)
+                    ->findOneOrCreate();
+
+                if (
+                    in_array($subField->getType(), self::CUSTOM_FIELD_SIMPLE_VALUES)
+                    || !$subField->isInternational()
+                ) {
+                    $customFieldValue
+                        ->setSimpleValue($value)
+                        ->save();
+                } else {
+                    $customFieldValue
+                        ->setLocale($locale)
+                        ->setValue($value)
+                        ->save();
+                }
+            }
         }
     }
 }

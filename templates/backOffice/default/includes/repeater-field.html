@@ -1,0 +1,354 @@
+{*
+    Include récursif pour afficher les champs repeater
+    Variables attendues:
+    - $custom_field : le champ custom field de type repeater
+    - $rows : les lignes existantes
+    - $sub_fields : les sous-champs du repeater
+    - $repeater_id : l'ID du repeater
+    - $parent_path : le chemin parent pour construire les noms de champs (ex: "custom_field_5_0")
+    - $depth : profondeur actuelle (pour éviter la récursion infinie)
+*}
+
+{$max_depth = 5}
+{if !isset($depth)}
+    {$depth = 0}
+{/if}
+
+{if $depth >= $max_depth}
+    <div class="alert alert-warning">
+        {intl l='Profondeur maximale de répéteurs atteinte' d='customfields'}
+    </div>
+{else}
+    {$repeater_id = $custom_field->getId()}
+    {$full_field_name = $parent_path|default:'custom_field'}
+    {$full_field_id = $full_field_name|cat:'_'|cat:$repeater_id}
+    {$row_count = $rows|@count}
+
+    <style>
+        .acf-row-sortable-ghost {
+            opacity: 0.4;
+            background: #f0f0f0;
+        }
+        .acf-row-sortable-chosen {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .acf-row-sortable-drag {
+            opacity: 0.8;
+            transform: rotate(2deg);
+        }
+        .glyphicon-move {
+            cursor: grab;
+        }
+        .glyphicon-move:active {
+            cursor: grabbing;
+        }
+    </style>
+
+    {* Charger Sortable.js si pas déjà chargé *}
+    {if $depth == 0}
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    {/if}
+
+    <div class="acf-repeater-field">
+        <div class="acf-repeater-header" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <h5 class="control-label" style="margin:0; font-weight:600; font-size:14px;">
+                {$custom_field->getTitle()}
+                <span class="label label-default" style="font-size:11px; font-weight:normal; margin-left:5px;">Répéteur</span>
+            </h5>
+            <a href="{url path='/admin/module/customfields/update/%id' id=$repeater_id}" class="btn btn-default btn-xs" title="{intl l='Manage sub-fields' d='customfields'}">
+                <i class="glyphicon glyphicon-cog"></i> {intl l='Gérer les sous-champs' d='customfields'}
+            </a>
+        </div>
+
+        {if $sub_fields|@count == 0}
+            <div class="alert alert-warning" style="margin-bottom:10px;">
+                <i class="glyphicon glyphicon-exclamation-sign"></i>
+                {intl l='Aucun sous-champ défini pour ce répéteur.' d='customfields'}
+                <a href="{url path='/admin/module/customfields/update/%id' id=$repeater_id}" class="alert-link">
+                    {intl l='Cliquez ici pour en ajouter.' d='customfields'}
+                </a>
+            </div>
+        {else}
+            <div class="acf-repeater" id="{$full_field_id}" data-repeater-id="{$repeater_id}" data-parent-path="{$parent_path|default:''}" data-depth="{$depth}">
+                <input type="hidden" name="{$full_field_id}_rows" value="{$row_count}" class="acf-row-count" />
+
+                <div class="acf-rows" id="{$full_field_id}_rows_container">
+                    {for $row=0 to $row_count-1}
+                        {$row_id = $rows[$row]['__row_id']|default:''}
+                        {$current_row_path = $full_field_id|cat:'_'|cat:$row}
+
+                        <div class="acf-row panel panel-default" data-row-index="{$row}" style="margin-bottom:5px;">
+                            <div class="acf-row-header panel-heading" style="padding:8px 12px; cursor:pointer; user-select:none; background:#f5f5f5;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span class="acf-row-label" style="display:flex; align-items:center; gap:8px;">
+                                        <i class="glyphicon glyphicon-move" style="color:#aaa; cursor:grab;"></i>
+                                        <strong class="acf-row-number">{intl l='Ligne' d='customfields'} {$row+1}</strong>
+                                    </span>
+                                    <div style="display:flex; gap:4px;">
+                                        <button type="button" class="btn btn-danger btn-xs acf-remove-row" title="{intl l='Supprimer cette ligne' d='customfields'}">
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="acf-row-body panel-body" style="padding:15px;">
+                                <input type="hidden" name="{$current_row_path}_row_id" value="{$row_id}" class="acf-row-id-input" />
+
+                                {foreach from=$sub_fields item=sub_field}
+                                    {$sub_field_id = $sub_field->getId()}
+                                    {$sub_field_type = $sub_field->getType()}
+                                    {$value = ''}
+                                    {if isset($rows[$row]) && isset($rows[$row][$sub_field_id])}
+                                        {$value = $rows[$row][$sub_field_id]}
+                                    {/if}
+
+                                    {if $sub_field_type == 'repeater'}
+                                        {* Sous-repeater récursif *}
+                                        {$sub_repeater_values = $value|default:[]}
+                                        {$sub_repeater_subfields = $repeater_subfields[$sub_field_id]|default:[]}
+                                        <div class="form-group" style="margin-bottom:12px; padding-left:15px; border-left:3px solid #ddd;">
+                                            {include file="./repeater-field.html"
+                                                custom_field=$sub_field
+                                                rows=$sub_repeater_values
+                                                sub_fields=$sub_repeater_subfields
+                                                repeater_id=$sub_field_id
+                                                parent_path=$current_row_path
+                                                repeater_subfields=$repeater_subfields
+                                                repeater_values=$repeater_values
+                                                depth=$depth+1
+                                            }
+                                        </div>
+                                    {else}
+                                        {* Champ simple *}
+                                        <div class="form-group" style="margin-bottom:12px;">
+                                            <label class="control-label" style="font-weight:600; display:block; margin-bottom:4px;">{$sub_field->getTitle()}</label>
+                                            {include file="./field-input.html"
+                                                field_type=$sub_field_type
+                                                field_name="{$current_row_path}_{$sub_field_id}"
+                                                field_value=$value
+                                                sub_field=$sub_field
+                                            }
+                                        </div>
+                                    {/if}
+                                {/foreach}
+                            </div>
+                        </div>
+                    {/for}
+
+                    {if $row_count == 0}
+                        <div class="acf-no-rows alert alert-info" style="margin-bottom:5px;">
+                            <i class="glyphicon glyphicon-info-sign"></i>
+                            {intl l='Aucune ligne pour le moment.' d='customfields'}
+                        </div>
+                    {/if}
+                </div>
+
+                {* Template pour nouvelles lignes *}
+                <template id="{$full_field_id}_template">
+                    <div class="acf-row panel panel-default" data-row-index="0" style="margin-bottom:5px;">
+                        <div class="acf-row-header panel-heading" style="padding:8px 12px; cursor:pointer; user-select:none; background:#f5f5f5;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span class="acf-row-label" style="display:flex; align-items:center; gap:8px;">
+                                    <i class="glyphicon glyphicon-move" style="color:#aaa; cursor:grab;"></i>
+                                    <strong class="acf-row-number">{intl l='Ligne' d='customfields'} 1</strong>
+                                </span>
+                                <div style="display:flex; gap:4px;">
+                                    <button type="button" class="btn btn-default btn-xs acf-row-toggle" title="{intl l='Replier/Déplier' d='customfields'}">
+                                        <i class="glyphicon glyphicon-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-xs acf-remove-row" title="{intl l='Supprimer cette ligne' d='customfields'}">
+                                        <i class="glyphicon glyphicon-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="acf-row-body panel-body" style="padding:15px;">
+                            <input type="hidden" name="{$full_field_id}_0_row_id" value="" class="acf-row-id-input" />
+                            {foreach from=$sub_fields item=sub_field}
+                                {if $sub_field->getType() == 'repeater'}
+                                    {* Template pour sous-repeater vide *}
+                                    {$sub_repeater_subfields = $repeater_subfields[$sub_field->getId()]|default:[]}
+                                    <div class="form-group" style="margin-bottom:12px; padding-left:15px; border-left:3px solid #ddd;">
+                                        {include file="./repeater-field.html"
+                                            custom_field=$sub_field
+                                            rows=[]
+                                            sub_fields=$sub_repeater_subfields
+                                            repeater_id=$sub_field->getId()
+                                            parent_path="{$full_field_id}_0"
+                                            repeater_subfields=$repeater_subfields
+                                            repeater_values=$repeater_values
+                                            depth=$depth+1
+                                        }
+                                    </div>
+                                {else}
+                                    <div class="form-group" style="margin-bottom:12px;">
+                                        <label class="control-label" style="font-weight:600; display:block; margin-bottom:4px;">{$sub_field->getTitle()}</label>
+                                        {include file="./field-input.html"
+                                            field_type=$sub_field->getType()
+                                            field_name="{$full_field_id}_0_{$sub_field->getId()}"
+                                            field_value=""
+                                            sub_field=$sub_field
+                                        }
+                                    </div>
+                                {/if}
+                            {/foreach}
+                        </div>
+                    </div>
+                </template>
+
+                <div style="margin-top:10px; padding:10px; border:2px dashed #ddd; border-radius:4px; text-align:center; background:#fafafa;">
+                    <button type="button" class="btn btn-success btn-sm acf-add-row" data-repeater-full-id="{$full_field_id}">
+                        <i class="glyphicon glyphicon-plus"></i> {intl l='Ajouter une ligne' d='customfields'}
+                    </button>
+                </div>
+            </div>
+
+            <script>
+            (function() {
+                var fullFieldId = '{$full_field_id}';
+                var container = document.getElementById(fullFieldId);
+                if (!container) return;
+
+                var rowsContainer = document.getElementById(fullFieldId + '_rows_container');
+                var rowCountInput = container.querySelector('.acf-row-count');
+                var templateEl = document.getElementById(fullFieldId + '_template');
+
+                function getRowCount() {
+                    return rowsContainer.querySelectorAll(':scope > .acf-row').length;
+                }
+
+                function updateRowNumbers() {
+                    var rows = rowsContainer.querySelectorAll(':scope > .acf-row');
+                    rows.forEach(function(row, index) {
+                        row.dataset.rowIndex = index;
+                        var label = row.querySelector(':scope > .acf-row-header .acf-row-number');
+                        if (label) {
+                            var baseText = label.textContent.replace(/\d+$/, '');
+                            label.textContent = baseText + (index + 1);
+                        }
+
+                        row.querySelectorAll(':scope > .acf-row-body > input[name], :scope > .acf-row-body > .form-group > input[name], :scope > .acf-row-body > .form-group > textarea[name], :scope > .acf-row-body > .form-group > div > input[name]').forEach(function(el) {
+                            var isRowId = el.classList.contains('acf-row-id-input');
+                            var savedValue = isRowId ? el.value : null;
+
+                            var pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
+                            el.name = el.name.replace(pattern, '$1' + index + '$2');
+
+                            if (isRowId && savedValue !== null) el.value = savedValue;
+                        });
+                    });
+                    rowCountInput.value = rows.length;
+                }
+
+                // Initialize drag & drop with Sortable
+                function initSortable() {
+                    if (window.Sortable && rowsContainer) {
+                        new Sortable(rowsContainer, {
+                            animation: 150,
+                            handle: '.glyphicon-move',
+                            ghostClass: 'acf-row-sortable-ghost',
+                            chosenClass: 'acf-row-sortable-chosen',
+                            dragClass: 'acf-row-sortable-drag',
+                            onEnd: function() {
+                                updateRowNumbers();
+                            }
+                        });
+                    }
+                }
+
+                // Wait for Sortable.js to load
+                if (window.Sortable) {
+                    initSortable();
+                } else {
+                    var checkSortable = setInterval(function() {
+                        if (window.Sortable) {
+                            clearInterval(checkSortable);
+                            initSortable();
+                        }
+                    }, 100);
+                }
+
+                // Wait for Sortable.js to load
+                if (window.Sortable) {
+                    initSortable();
+                } else {
+                    var checkSortable = setInterval(function() {
+                        if (window.Sortable) {
+                            clearInterval(checkSortable);
+                            initSortable();
+                        }
+                    }, 100);
+                }
+
+                function bindRowEvents(row) {
+                    var header = row.querySelector(':scope > .acf-row-header');
+                    var body = row.querySelector(':scope > .acf-row-body');
+                    var toggleBtn = row.querySelector(':scope > .acf-row-header .acf-row-toggle');
+                    var removeBtn = row.querySelector(':scope > .acf-row-header .acf-remove-row');
+
+                    if (!header || !removeBtn) return;
+
+                    header.addEventListener('click', function(e) {
+                        if (e.target.closest('.acf-remove-row') || e.target.closest('.acf-row-toggle')) return;
+                        var isOpen = body.style.display !== 'none';
+                        body.style.display = isOpen ? 'none' : '';
+                        var icon = toggleBtn ? toggleBtn.querySelector('.glyphicon') : null;
+                        if (icon) {
+                            icon.className = isOpen ? 'glyphicon glyphicon-chevron-down' : 'glyphicon glyphicon-chevron-up';
+                        }
+                    });
+
+                    removeBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm('{intl l="Supprimer cette ligne ?" d="customfields"}')) {
+                            row.remove();
+                            updateRowNumbers();
+                            var noRows = rowsContainer.querySelector('.acf-no-rows');
+                            if (noRows) noRows.style.display = getRowCount() === 0 ? '' : 'none';
+                        }
+                    });
+                }
+
+                rowsContainer.querySelectorAll(':scope > .acf-row').forEach(bindRowEvents);
+
+                var addBtn = container.querySelector('.acf-add-row[data-repeater-full-id="' + fullFieldId + '"]');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function() {
+                        if (!templateEl || !templateEl.content) return;
+
+                        var clone = document.importNode(templateEl.content.querySelector('.acf-row'), true);
+                        var newIndex = getRowCount();
+
+                        clone.dataset.rowIndex = newIndex;
+                        var label = clone.querySelector('.acf-row-number');
+                        if (label) {
+                            var baseText = label.textContent.replace(/\d+$/, '');
+                            label.textContent = baseText + (newIndex + 1);
+                        }
+
+                        clone.querySelectorAll('[name]').forEach(function(el) {
+                            var pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
+                            el.name = el.name.replace(pattern, '$1' + newIndex + '$2');
+
+                            if (el.classList.contains('acf-row-id-input')) {
+                                el.value = '';
+                            } else if (el.tagName === 'INPUT' && el.type !== 'file' && el.type !== 'hidden') {
+                                el.value = '';
+                            } else if (el.tagName === 'TEXTAREA') {
+                                el.value = '';
+                            }
+                        });
+
+                        rowsContainer.appendChild(clone);
+                        bindRowEvents(clone);
+                        rowCountInput.value = getRowCount();
+
+                        var noRows = rowsContainer.querySelector('.acf-no-rows');
+                        if (noRows) noRows.style.display = 'none';
+                    });
+                }
+            })();
+            </script>
+        {/if}
+    </div>
+{/if}

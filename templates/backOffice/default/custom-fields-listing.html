@@ -3,7 +3,7 @@
         <div class="pull-right">
             <a href="{url path='/admin/module/customfields/create'}" class="btn btn-sm btn-success">
                 <i class="glyphicon glyphicon-plus"></i>
-                {intl l="Create a custom field" d="customfields"}
+                {intl l="Créer un champ personnalisé" d="customfields"}
             </a>
         </div>
     </div>
@@ -15,7 +15,7 @@
                     <thead>
                     <tr>
                         <th>{intl l="ID" d="customfields"}</th>
-                        <th>{intl l="Title" d="customfields"}</th>
+                        <th>{intl l="Titre" d="customfields"}</th>
                         <th>{intl l="Code" d="customfields"}</th>
                         <th>{intl l="Type" d="customfields"}</th>
                         <th>{intl l="Source" d="customfields"}</th>
@@ -24,9 +24,17 @@
                     </thead>
                     <tbody>
                     {foreach from=$custom_fields item=custom_field}
-                        <tr>
+                        {* Skip sub-fields — they are shown under their parent repeater *}
+                        {if isset($subfield_repeater_map[$custom_field->getId()])}{continue}{/if}
+
+                        <tr class="{if $custom_field->getType() == 'repeater'}active{/if}">
                             <td>{$custom_field->getId()}</td>
-                            <td>{$custom_field->getTitle()}</td>
+                            <td>
+                                {if $custom_field->getType() == 'repeater'}
+                                    <i class="glyphicon glyphicon-th-list" style="color:#337ab7; margin-right:4px;" title="Répéteur"></i>
+                                {/if}
+                                <strong>{$custom_field->getTitle()}</strong>
+                            </td>
                             <td><code>{$custom_field->getCode()}</code></td>
                             <td>
                                 {if $custom_field->getType() === "textarea"}
@@ -35,6 +43,8 @@
                                     {intl l="Text" d="customfields"}
                                 {elseif $custom_field->getType() === "wysiwyg"}
                                     {intl l="Wysiwyg" d="customfields"}
+                                {elseif $custom_field->getType() === "repeater"}
+                                    <span class="label label-primary">{intl l="Répéteur" d="customfields"}</span>
                                 {else}
                                     {$custom_field->getType()}
                                 {/if}
@@ -44,28 +54,82 @@
                                     {$source->getSource()}{if not $smarty.foreach.sources.last}, {/if}
                                 {/foreach}
                             </td>
-
                             <td class="text-right">
                                 <a href="{url path='/admin/module/customfields/update/%id' id=$custom_field->getId()}"
                                    class="btn btn-sm btn-default"
-                                   title="{intl l='Edit' d='customfields'}">
+                                   title="{intl l='Modifier' d='customfields'}">
                                     <i class="glyphicon glyphicon-edit"></i>
                                 </a>
                                 <a href="{url path='/admin/module/customfields/delete/%id' id=$custom_field->getId()}"
                                    class="btn btn-sm btn-danger"
-                                   title="{intl l='Delete' d='customfields'}"
-                                   onclick="return confirm('{intl l='Are you sure you want to delete this custom field?' d='customfields'}');">
+                                   title="{intl l='Supprimer' d='customfields'}"
+                                   onclick="return confirm('{intl l='Supprimer ce champ personnalisé ?' d='customfields'}');">
                                     <i class="glyphicon glyphicon-trash"></i>
                                 </a>
                             </td>
                         </tr>
+
+                        {* Show sub-fields indented under their repeater *}
+                        {if $custom_field->getType() == 'repeater'}
+                            {$has_sub_fields = false}
+                            {foreach from=$custom_fields item=sub_cf}
+                                {if isset($subfield_repeater_map[$sub_cf->getId()]) && $subfield_repeater_map[$sub_cf->getId()]->getId() == $custom_field->getId()}
+                                    {$has_sub_fields = true}
+                                    <tr style="background:#f9f9ff;">
+                                        <td style="padding-left:30px; color:#aaa;">{$sub_cf->getId()}</td>
+                                        <td style="padding-left:30px;">
+                                            <i class="glyphicon glyphicon-arrow-right" style="color:#aaa; margin-right:4px;"></i>
+                                            {$sub_cf->getTitle()}
+                                        </td>
+                                        <td><code>{$sub_cf->getCode()}</code></td>
+                                        <td>
+                                            {if $sub_cf->getType() === "textarea"}
+                                                {intl l="Textarea" d="customfields"}
+                                            {elseif $sub_cf->getType() === "text"}
+                                                {intl l="Text" d="customfields"}
+                                            {elseif $sub_cf->getType() === "wysiwyg"}
+                                                {intl l="Wysiwyg" d="customfields"}
+                                            {else}
+                                                {$sub_cf->getType()}
+                                            {/if}
+                                        </td>
+                                        <td colspan="1" style="color:#999; font-size:12px;">
+                                            <i class="glyphicon glyphicon-arrow-up" style="font-size:10px;"></i>
+                                            {intl l="Sous-champ" d="customfields"}
+                                        </td>
+                                        <td class="text-right">
+                                            <a href="{url path='/admin/module/customfields/update/%id' id=$sub_cf->getId()}"
+                                               class="btn btn-xs btn-default"
+                                               title="{intl l='Modifier' d='customfields'}">
+                                                <i class="glyphicon glyphicon-edit"></i>
+                                            </a>
+                                            <a href="{url path='/admin/module/customfields/delete/%id' id=$sub_cf->getId()}"
+                                               class="btn btn-xs btn-danger"
+                                               title="{intl l='Supprimer' d='customfields'}"
+                                               onclick="return confirm('{intl l='Supprimer ce sous-champ ?' d='customfields'}');">
+                                                <i class="glyphicon glyphicon-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {/if}
+                            {/foreach}
+                            <tr style="background:#eef4ff;">
+                                <td colspan="6" style="padding: 6px 12px 6px 30px; border-top: none;">
+                                    <a href="{url path='/admin/module/customfields/create?parent_repeater_id='|cat:$custom_field->getId()}" class="btn btn-xs btn-success">
+                                        <i class="glyphicon glyphicon-plus"></i>
+                                        {intl l="Ajouter un sous-champ" d="customfields"}
+                                    </a>
+                                </td>
+                            </tr>
+                        {/if}
+
                     {/foreach}
                     </tbody>
                 </table>
             </div>
         {else}
             <div class="alert alert-info">
-                {intl l="No custom fields found." d="customfields"}
+                {intl l="Aucun champ personnalisé trouvé." d="customfields"}
             </div>
         {/if}
     </div>

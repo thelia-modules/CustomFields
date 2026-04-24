@@ -1,7 +1,9 @@
 <div class="form-group">
-    <label for="custom_field_{$custom_field->getId()}" class="control-label">
-        {$custom_field->getTitle()}
-    </label>
+    {if $custom_field->getType() != 'repeater'}
+        <label for="custom_field_{$custom_field->getId()}" class="control-label">
+            {$custom_field->getTitle()}
+        </label>
+    {/if}
 
     {if $custom_field->getType() == 'text'}
         <input
@@ -25,6 +27,19 @@
                 class="form-control wysiwyg"
                 rows="5"
         >{$values[$custom_field->getId()]|default:''}</textarea>
+    {elseif $custom_field->getType() == 'checkbox'}
+        <input
+                type="hidden"
+                name="custom_field_{$custom_field->getId()}"
+                value="0"
+        />
+        <input
+                type="checkbox"
+                id="custom_field_{$custom_field->getId()}"
+                name="custom_field_{$custom_field->getId()}"
+                value="1"
+                {if $values[$custom_field->getId()]|default:'' == '1'}checked{/if}
+        />
     {elseif $custom_field->getType() == 'content'}
         {$value =$values[$custom_field->getId()]|default:''}
         <input
@@ -79,7 +94,7 @@
             {if $customFieldValueId}
                 {loop type="custom_field_image_loop" name="custom_field_image_loop" custom_field_value_id=$customFieldValueId}
                     <div class="mt-2" style="position: relative; display: inline-block;">
-                        <img src="{$IMAGE_URL}" alt="{$custom_field->getTitle()}" style="max-width: 200px; max-height: 200px; display: block;" />
+                        <img src="{$IMAGE_URL}" alt="{$custom_field->getTitle()}" style="width: 200px; height: 200px; object-fit: contain; display: block;" />
                         <a href="{url path='/admin/module/customfields/image/delete/'|cat:$ID}"
                            class="btn btn-danger btn-xs delete-custom-field-image"
                            style="position: absolute; top: 5px; right: 5px; padding: 2px 6px;"
@@ -98,14 +113,34 @@
                     accept="image/*"
             />
         </div>
+    {/if}
 
-    {/if}
+    {if $custom_field->getType() == 'repeater'}
+        {$repeater_id = $custom_field->getId()}
+
+        {$rows = $repeater_values[$repeater_id]|default:[]}
+        {$sub_fields = $repeater_subfields[$repeater_id]|default:[]}
+
+        {include file="./repeater-field.html"
+            custom_field=$custom_field
+            rows=$rows
+            sub_fields=$sub_fields
+            repeater_id=$repeater_id
+            repeater_subfields=$repeater_subfields
+            repeater_values=$repeater_values
+            depth=0
+        }
+    {/if}{* /repeater *}
+
     {$codeSource = ""}
+
     {if $source != 'general'}
-        {$codeSource = ", '"|cat:$source|cat:"', source_id "}
+        {$codeSource = ", '"|cat:$source|cat:"'"}
     {/if}
-    {$code = '{{ custom_field_value(\''|cat:$custom_field->getCode()|cat:'\') }}'}
+    {if $source != 'general' && $source|strpos:'option_page_' !== 0}
+        {$codeSource = $codeSource|cat:", source_id "}
+    {/if}
     <span class="help-block">
-        {intl l="Code: %code" code='{{ custom_field_value(\''|cat:$custom_field->getCode()|cat:'\''|cat:$codeSource|cat:') }}' d="customfields"}
-    </span>
+            {intl l="Code: %code" code='{{ custom_field_value(\''|cat:$custom_field->getCode()|cat:'\''|cat:$codeSource|cat:') }}' d="customfields"}
+        </span>
 </div>

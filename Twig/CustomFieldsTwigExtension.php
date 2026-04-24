@@ -21,6 +21,7 @@ class CustomFieldsTwigExtension extends AbstractExtension
         return [
             new TwigFunction('custom_field_value', [$this, 'getCustomFieldValue']),
             new TwigFunction('custom_field_image', [$this, 'getCustomFieldImage']),
+            new TwigFunction('custom_field_repeater', [$this, 'getRepeaterValues']),
         ];
     }
 
@@ -43,5 +44,29 @@ class CustomFieldsTwigExtension extends AbstractExtension
         }
 
         return $this->customFieldService->getCustomFieldValue($code, $source, $sourceId, $locale);
+    }
+
+    /**
+     * Get image ID for a custom image field, usable with custom_field_image_loop.
+     * Usage: {{ custom_field_image('my_image_code', 'product', product_id) }}
+     */
+    public function getCustomFieldImage(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): ?int
+    {
+        if ($locale === null) {
+            $locale = $this->requestStack->getCurrentRequest()->getSession()->getLang()->getLocale();
+        }
+
+        $imageId = $this->customFieldService->getCustomFieldValue($code, $source, $sourceId, $locale);
+
+        return $imageId !== null ? (int) $imageId : null;
+    }
+
+    public function getRepeaterValues(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): array
+    {
+        if ($locale === null) {
+            $locale = $this->requestStack->getCurrentRequest()->getSession()->getLang()->getLocale();
+        }
+
+        return $this->customFieldService->getRepeaterValues($code, $source, $sourceId, $locale);
     }
 }

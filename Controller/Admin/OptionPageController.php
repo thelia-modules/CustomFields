@@ -10,6 +10,7 @@ use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
+use CustomFields\Service\RepeaterDataLoaderService;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -29,7 +30,8 @@ use Thelia\Tools\URL;
 final class OptionPageController extends BaseAdminController
 {
     public function __construct(
-        private readonly CustomFieldSortingService $sortingService
+        private readonly CustomFieldSortingService $sortingService,
+        private readonly RepeaterDataLoaderService $repeaterDataLoader
     ) {
     }
 
@@ -159,6 +161,7 @@ final class OptionPageController extends BaseAdminController
             $value = CustomFieldValueQuery::create()
                 ->filterByCustomFieldId($customField->getId())
                 ->filterBySource($source)
+                ->filterByRepeaterRowId(null)
                 ->findOne();
 
             if (
@@ -180,12 +183,16 @@ final class OptionPageController extends BaseAdminController
 
         $groupedFields = $this->sortingService->groupByParent($customFields);
 
+        [$repeaterValues, $repeaterSubfields] = $this->repeaterDataLoader->loadRepeaterData($customFields, $source, null, $locale);
+
         return $this->render('option-page-view', [
             'option_page' => $optionPage,
             'custom_fields' => $customFields,
             'grouped_fields' => $groupedFields,
             'values' => $values,
             'value_ids' => $valueIds,
+            'repeater_values' => $repeaterValues,
+            'repeater_subfields' => $repeaterSubfields,
             'source' => $source,
             'edit_language_id' => $editLanguageId,
         ]);

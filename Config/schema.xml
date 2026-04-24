@@ -39,16 +39,13 @@
         <column name="code"  type="VARCHAR" size="100"  required="true"/>
         <column name="title" type="VARCHAR" size="255"  required="true"/>
         <column name="is_international" type="BOOLEAN" required="true" default="true"/>
-        <column name="type"  type="ENUM"    valueSet="text,textarea, wysiwyg, content, category, folder, product, image" required="true" default="text"/>
+        <column name="type"  type="ENUM"    valueSet="text,textarea,wysiwyg,content,category,folder,product,image,repeater,checkbox" required="true" default="text"/>
+        <column name="position" type="INTEGER" required="false" default="0"/>
         <column name="custom_field_parent_id" type="INTEGER" required="false"/>
 
-        <foreign-key foreignTable="custom_field_parent" onDelete="SET NULL" onUpdate="CASCADE">
-            <reference local="custom_field_parent_id" foreign="id"/>
-        </foreign-key>
+        <!-- No FK on custom_field_parent_id: can reference custom_field_parent.id (grouping)
+             OR custom_field.id (repeater sub-field parent) -->
 
-        <unique>
-            <unique-column name="code"/>
-        </unique>
     </table>
 
     <!-- ===================== -->
@@ -73,6 +70,7 @@
         <column name="custom_field_id" type="INTEGER" required="true"/>
         <column name="source"          type="VARCHAR" size="100" required="true"/>
         <column name="source_id"       type="INTEGER"/>
+        <column name="repeater_row_id" type="INTEGER" required="false"/>
         <column name="value"           type="LONGVARCHAR"/>
         <column name="simple_value"    type="LONGVARCHAR"/>
 
@@ -87,16 +85,42 @@
             <index-column name="source_id"/>
         </index>
 
-        <!-- Contrainte d'unicité : une seule valeur par champ/source/entité -->
+        <!-- Contrainte d'unicité : une seule valeur par champ/source/entité/row -->
         <unique name="uq_cfv_field_source">
             <unique-column name="custom_field_id"/>
             <unique-column name="source"/>
             <unique-column name="source_id"/>
+            <unique-column name="repeater_row_id"/>
         </unique>
+
+        <foreign-key foreignTable="custom_field_repeater_row" onDelete="CASCADE" onUpdate="CASCADE">
+            <reference local="repeater_row_id" foreign="id"/>
+        </foreign-key>
 
         <behavior name="i18n">
             <parameter name="i18n_columns" value="value" />
         </behavior>
+    </table>
+
+    <!-- ===================== -->
+    <!-- custom_field_repeater_row    -->
+    <!-- ===================== -->
+    <table name="custom_field_repeater_row">
+        <column name="id"              type="INTEGER" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="custom_field_id" type="INTEGER" required="true"/>
+        <column name="source"          type="VARCHAR" size="100" required="true"/>
+        <column name="source_id"       type="INTEGER"/>
+        <column name="position"        type="INTEGER" required="true" default="0"/>
+
+        <foreign-key foreignTable="custom_field" onDelete="CASCADE" onUpdate="CASCADE">
+            <reference local="custom_field_id" foreign="id"/>
+        </foreign-key>
+
+        <index name="idx_cfrr_source">
+            <index-column name="source"/>
+            <index-column name="source_id"/>
+            <index-column name="custom_field_id"/>
+        </index>
     </table>
 
     <!-- ===================== -->

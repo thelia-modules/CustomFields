@@ -6,6 +6,7 @@ namespace CustomFields\Form;
 
 use CustomFields\Model\CustomFieldOptionPageQuery;
 use CustomFields\Model\CustomFieldParentQuery;
+use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\Map\CustomFieldTableMap;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -19,11 +20,20 @@ final class CustomFieldForm extends BaseForm
 {
     private function getParentChoices()
     {
-        $parents = CustomFieldParentQuery::create()->find();
         $parentChoices = [];
+
+        $parents = CustomFieldParentQuery::create()->find();
         foreach ($parents as $parent) {
             $parentChoices[$parent->getTitle()] = $parent->getId();
         }
+
+        $repeaters = CustomFieldQuery::create()
+            ->filterByType('repeater')
+            ->find();
+        foreach ($repeaters as $repeater) {
+            $parentChoices['↳ ' . $repeater->getTitle() . ' (Repeater)'] = $repeater->getId();
+        }
+
         return $parentChoices;
     }
     private function getSourceChoices(): array
@@ -95,11 +105,13 @@ final class CustomFieldForm extends BaseForm
                         Translator::getInstance()->trans('Text', [], 'customfields') => CustomFieldTableMap::COL_TYPE_TEXT,
                         Translator::getInstance()->trans('Textarea', [], 'customfields') => CustomFieldTableMap::COL_TYPE_TEXTAREA,
                         Translator::getInstance()->trans('Wysiwyg', [], 'customfields') => CustomFieldTableMap::COL_TYPE_WYSIWYG,
+                        Translator::getInstance()->trans('Checkbox', [], 'customfields') => CustomFieldTableMap::COL_TYPE_CHECKBOX ?? 'checkbox',
                         Translator::getInstance()->trans('Content', [], 'customfields') => CustomFieldTableMap::COL_TYPE_CONTENT,
                         Translator::getInstance()->trans('Category', [], 'customfields') => CustomFieldTableMap::COL_TYPE_CATEGORY,
                         Translator::getInstance()->trans('Folder', [], 'customfields') => CustomFieldTableMap::COL_TYPE_FOLDER,
                         Translator::getInstance()->trans('Product', [], 'customfields') => CustomFieldTableMap::COL_TYPE_PRODUCT,
                         Translator::getInstance()->trans('Image', [], 'customfields') => CustomFieldTableMap::COL_TYPE_IMAGE,
+                        Translator::getInstance()->trans('Repeater', [], 'customfields') => CustomFieldTableMap::COL_TYPE_REPEATER ?? 'repeater',
                     ],
                     'label' => Translator::getInstance()->trans('Type', [], 'customfields'),
                     'label_attr' => ['for' => 'custom_field_type'],
