@@ -74,8 +74,11 @@ class ExportService
             }
 
             $parent = 'no_parent';
-            if (null !== $customField->getCustomFieldParent()) {
-                $parent = $customField->getCustomFieldParent()->getTitle();
+            if (null !== $customField->getCustomFieldParentId()) {
+                $parentField = CustomFieldQuery::create()
+                    ->findById($customField->getCustomFieldParentId());
+
+                $parent = $parentField->getTitle();
             }
 
             $export[$parent][] = $this->serializeCustomField($customField, $subFieldIds);
