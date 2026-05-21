@@ -10,7 +10,6 @@
 {block name="check-access"}view{/block}
 
 {block name="main-content"}
-
     {if isset($smarty.get.error) && !empty($smarty.get.error)}
         <div class="alert alert-danger">
             {$smarty.get.error}
@@ -26,7 +25,7 @@
             >
                 {form_hidden_fields}
 
-                {if $form_error}
+                {if $form_error && $form_error_message}
                     <div class="alert alert-danger">
                         {$form_error_message}
                     </div>
