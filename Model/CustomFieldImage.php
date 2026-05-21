@@ -2,7 +2,6 @@
 
 namespace CustomFields\Model;
 
-use CustomFields\CustomFields;
 use CustomFields\Model\Base\CustomFieldImage as BaseCustomFieldImage;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Thelia\Core\File\FileModelInterface;
@@ -19,7 +18,7 @@ use Thelia\Core\File\FileModelParentInterface;
  */
 class CustomFieldImage extends BaseCustomFieldImage implements FileModelInterface
 {
-    public function setParentId($parentId): static
+    public function setParentId(int $parentId): static
     {
         $this->setCustomFieldValueId($parentId);
         return $this;
@@ -90,7 +89,7 @@ class CustomFieldImage extends BaseCustomFieldImage implements FileModelInterfac
         // TODO: Implement setLocale() method.
     }
 
-    public function setVisible(bool $visible)
+    public function setVisible(?int $visible = null): static
     {
         // TODO: Implement setVisible() method.
     }
