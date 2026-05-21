@@ -135,8 +135,65 @@ final class CustomFieldController extends BaseAdminController
         ]);
     }
 
-    #[Route(path: '/create', name: 'create', methods: ['GET', 'POST'])]
+    #[Route(path: '/create', name: 'create_view', methods: ['GET'])]
     public function createCustomField(): Response
+    {
+        if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::CREATE)) {
+            return $response;
+        }
+
+        $parentId = (int) $this->getRequest()->query->get('parent_repeater_id');
+
+        // Get all parents for the dropdown
+        $parents = CustomFieldParentQuery::create()->find();
+
+        $formData = [
+            'is_international' => true,
+        ];
+
+        if ($parentId > 0) {
+            $formData['custom_field_parent_id'] = $parentId;
+            // Pre-select same sources as parent repeater
+            $repeaterSources = CustomFieldSourceQuery::create()
+                ->filterByCustomFieldId($parentId)
+                ->find();
+            $sourceCodes = [];
+            foreach ($repeaterSources as $rs) {
+                $sourceCodes[] = $rs->getSource();
+            }
+            if (!empty($sourceCodes)) {
+                $formData['sources'] = $sourceCodes;
+            }
+        }
+
+        $form = $this->createForm(CustomFieldForm::getName(), FormType::class, $formData);
+        $this->getParserContext()->addForm($form);
+        $error = null;
+
+        $parentRepeater = null;
+        if ($parentId > 0) {
+            $parentRepeater = CustomFieldQuery::create()->findPk($parentId);
+        }
+
+        if ($error) {
+            $data = ['error' => $error];
+            if ($parentId) {
+                $data['parent_repeater_id'] = $parentId;
+            }
+            return new RedirectResponse(
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/create',$data)
+            );
+        }
+        return $this->render('custom-field-form', [
+            'custom_field' => null,
+            'parents' => $parents,
+            'sub_fields' => [],
+            'parent_repeater' => $parentRepeater,
+        ]);
+    }
+
+    #[Route(path: '/create', name: 'create_post', methods: ['POST'])]
+    public function createCustomFieldPost(): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::CREATE)) {
             return $response;
@@ -175,12 +232,6 @@ final class CustomFieldController extends BaseAdminController
 
             // Handle new parent creation
             $this->handleSave($validatedForm);
-
-            return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
-                    'success' => Translator::getInstance()->trans('Custom field created successfully', [], 'customfields'),
-                ])
-            );
         } catch (FormValidationException $e) {
             $error = $e->getMessage();
         } catch (PropelException $e) {
@@ -189,26 +240,21 @@ final class CustomFieldController extends BaseAdminController
             // Form not submitted, display empty form
         }
 
-        $parentRepeater = null;
-        if ($parentId > 0) {
-            $parentRepeater = CustomFieldQuery::create()->findPk($parentId);
-        }
-
         if ($error) {
             $data = ['error' => $error];
             if ($parentId) {
                 $data['parent_repeater_id'] = $parentId;
             }
             return new RedirectResponse(
-                URL::getInstance()->absoluteUrl('/admin/module/customfields/create',$data)
+                URL::getInstance()->absoluteUrl('/admin/module/customfields/create' , $data)
             );
         }
-        return $this->render('custom-field-form', [
-            'custom_field' => null,
-            'parents' => $parents,
-            'sub_fields' => [],
-            'parent_repeater' => $parentRepeater,
-        ]);
+
+        return new RedirectResponse(
+            URL::getInstance()->absoluteUrl('/admin/module/customfields/list', [
+                'success' => Translator::getInstance()->trans('Custom field created successfully', [], 'customfields'),
+            ])
+        );
     }
 
     #[Route(path: '/update/{id}', name: 'update', methods: ['GET', 'POST'])]
