@@ -1,15 +1,17 @@
 {% set current = admin_current_location|default('') %}
-<li class="{{ current == 'option_pages' ? 'active' : '' }}" id="option_pages_menu">
-    <a title="{{ 'Option Pages'|trans({}, 'customfields') }}" href="#collapse-option-pages" {{ current == 'option_pages' ? 'class="open"' : '' }}>
-        <i class="bi bi-file-earmark-text"></i>
+{% set is_active = current == 'option_pages' %}
+<li class="nav-item" id="option_pages_menu">
+    <a href="#collapse-option-pages" data-bs-toggle="collapse" aria-expanded="{{ is_active ? 'true' : 'false' }}"
+       class="nav-link bo-side-nav__toggle {{ is_active ? 'active' : '' }}" title="{{ 'Option Pages'|trans({}, 'customfields') }}">
+        <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>
         <span class="item-text">{{ 'Option Pages'|trans({}, 'customfields') }}</span>
-        <i class="bi bi-chevron-right menu-collapse"></i>
+        <i class="bi bi-chevron-right ms-auto bo-side-nav__chevron" aria-hidden="true"></i>
     </a>
 
-    <ul id="collapse-option-pages" class="collapse {{ current == 'option_pages' ? 'show' : '' }}" role="menu">
+    <ul id="collapse-option-pages" class="nav flex-column collapse {{ is_active ? 'show' : '' }}" role="menu">
         {% for page in option_pages %}
             <li role="menuitem">
-                <a href="/admin/module/customfields/option-pages/view/{{ page.id }}">
+                <a class="nav-link" href="/admin/module/customfields/option-pages/view/{{ page.id }}">
                     {{ page.title }}
                 </a>
             </li>
