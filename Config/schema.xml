@@ -153,5 +153,5 @@
         </unique>
     </table>
 
-    <external-schema filename="vendor/thelia/config/schema.xml" referenceOnly="true"/>
+    <external-schema filename="local/config/schema.xml" referenceOnly="true"/>
 </database>
