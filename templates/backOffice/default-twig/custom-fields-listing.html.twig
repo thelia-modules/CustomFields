@@ -1,0 +1,113 @@
+{# Included by custom-field-list.html.twig — fields table (Twig BO). #}
+<div class="card">
+    <div class="card-header clearfix">
+        <div class="float-end">
+            <a href="/admin/module/customfields/create" class="btn btn-sm btn-success">
+                <i class="bi bi-plus-lg"></i>
+                {{ 'Create a custom field'|trans({}, 'customfields') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="card-body">
+        {% if custom_fields|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ 'ID'|trans({}, 'customfields') }}</th>
+                            <th>{{ 'Title'|trans({}, 'customfields') }}</th>
+                            <th>{{ 'Code'|trans({}, 'customfields') }}</th>
+                            <th>{{ 'Type'|trans({}, 'customfields') }}</th>
+                            <th>{{ 'Source'|trans({}, 'customfields') }}</th>
+                            <th class="text-end">{{ 'Actions'|trans({}, 'customfields') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for custom_field in custom_fields %}
+                            {% if subfield_repeater_map[custom_field.id] is not defined %}
+                                <tr class="{{ custom_field.type == 'repeater' ? 'table-active' : '' }}">
+                                    <td>{{ custom_field.id }}</td>
+                                    <td>
+                                        {% if custom_field.type == 'repeater' %}
+                                            <i class="bi bi-list-task" style="color:#337ab7; margin-right:4px;" title="{{ 'Repeater'|trans({}, 'customfields') }}"></i>
+                                        {% endif %}
+                                        <strong>{{ custom_field.title }}</strong>
+                                    </td>
+                                    <td><code>{{ custom_field.code }}</code></td>
+                                    <td>
+                                        {% if custom_field.type == 'textarea' %}{{ 'Textarea'|trans({}, 'customfields') }}
+                                        {% elseif custom_field.type == 'text' %}{{ 'Text'|trans({}, 'customfields') }}
+                                        {% elseif custom_field.type == 'wysiwyg' %}{{ 'Wysiwyg'|trans({}, 'customfields') }}
+                                        {% elseif custom_field.type == 'repeater' %}<span class="badge text-bg-primary">{{ 'Repeater'|trans({}, 'customfields') }}</span>
+                                        {% else %}{{ custom_field.type }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% for source in custom_field.customFieldSources %}{{ source.source }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="/admin/module/customfields/update/{{ custom_field.id }}" class="btn btn-sm btn-secondary" title="{{ 'Edit'|trans({}, 'customfields') }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="/admin/module/customfields/delete/{{ custom_field.id }}" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}"
+                                           onclick="return confirm('{{ 'Delete this custom field?'|trans({}, 'customfields') }}');">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+
+                                {% if custom_field.type == 'repeater' %}
+                                    {% for sub_cf in custom_fields %}
+                                        {% if subfield_repeater_map[sub_cf.id] is defined and subfield_repeater_map[sub_cf.id].id == custom_field.id %}
+                                            <tr style="background:#f9f9ff;">
+                                                <td style="padding-left:30px; color:#aaa;">{{ sub_cf.id }}</td>
+                                                <td style="padding-left:30px;">
+                                                    <i class="bi bi-arrow-right" style="color:#aaa; margin-right:4px;"></i>
+                                                    {{ sub_cf.title }}
+                                                </td>
+                                                <td><code>{{ sub_cf.code }}</code></td>
+                                                <td>
+                                                    {% if sub_cf.type == 'textarea' %}{{ 'Textarea'|trans({}, 'customfields') }}
+                                                    {% elseif sub_cf.type == 'text' %}{{ 'Text'|trans({}, 'customfields') }}
+                                                    {% elseif sub_cf.type == 'wysiwyg' %}{{ 'Wysiwyg'|trans({}, 'customfields') }}
+                                                    {% else %}{{ sub_cf.type }}
+                                                    {% endif %}
+                                                </td>
+                                                <td colspan="1" style="color:#999; font-size:12px;">
+                                                    <i class="bi bi-arrow-up" style="font-size:10px;"></i>
+                                                    {{ 'Sub-field'|trans({}, 'customfields') }}
+                                                </td>
+                                                <td class="text-end">
+                                                    <a href="/admin/module/customfields/update/{{ sub_cf.id }}" class="btn btn-sm btn-secondary" title="{{ 'Edit'|trans({}, 'customfields') }}">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <a href="/admin/module/customfields/delete/{{ sub_cf.id }}" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}"
+                                                       onclick="return confirm('{{ 'Delete this sub-field?'|trans({}, 'customfields') }}');">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <tr style="background:#eef4ff;">
+                                        <td colspan="6" style="padding: 6px 12px 6px 30px; border-top: none;">
+                                            <a href="/admin/module/customfields/create?parent_repeater_id={{ custom_field.id }}" class="btn btn-sm btn-success">
+                                                <i class="bi bi-plus-lg"></i>
+                                                {{ 'Add a sub-field'|trans({}, 'customfields') }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                {{ 'No custom field found.'|trans({}, 'customfields') }}
+            </div>
+        {% endif %}
+    </div>
+</div>

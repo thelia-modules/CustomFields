@@ -1,0 +1,58 @@
+{#
+    Simple input rendering for repeater sub-fields (Twig BO).
+    Expected vars:
+    - field_type : field type
+    - field_name : name attribute (flat, read raw by the controller)
+    - field_value : current value (array {id, url} for image, scalar otherwise)
+    - sub_field   : the CustomField object
+#}
+{% if field_type == 'text' %}
+    <input type="text" name="{{ field_name }}" class="form-control" value="{{ field_value }}" />
+
+{% elseif field_type == 'textarea' %}
+    <textarea name="{{ field_name }}" class="form-control" rows="3">{{ field_value }}</textarea>
+
+{% elseif field_type == 'wysiwyg' %}
+    <textarea name="{{ field_name }}" class="form-control wysiwyg" rows="3">{{ field_value }}</textarea>
+
+{% elseif field_type == 'checkbox' %}
+    <input type="hidden" name="{{ field_name }}" value="0" />
+    <div class="form-check">
+        <input type="checkbox" class="form-check-input" name="{{ field_name }}" value="1" {{ field_value == '1' ? 'checked' : '' }} />
+    </div>
+
+{% elseif field_type == 'image' %}
+    <div class="d-flex align-items-center gap-2">
+        {% if field_value and field_value.url is defined and field_value.url %}
+            <div class="position-relative d-inline-block">
+                <img src="{{ field_value.url }}" alt="{{ sub_field.title }}" style="width: 150px; height: 150px; object-fit: contain; display: block;" />
+                <a href="/admin/module/customfields/image/delete/{{ field_value.id }}"
+                   class="btn btn-danger btn-sm delete-custom-field-image position-absolute"
+                   style="top: 5px; right: 5px; padding: 2px 6px;"
+                   data-confirm="{{ 'Are you sure you want to delete this image?'|trans({}, 'customfields') }}"
+                   title="{{ 'Delete image'|trans({}, 'customfields') }}">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        {% endif %}
+        <input type="file" name="{{ field_name }}" class="form-control" accept="image/*" />
+    </div>
+
+{% elseif field_type in ['content', 'category', 'folder', 'product'] %}
+    <input type="number" name="{{ field_name }}" class="form-control" value="{{ field_value }}" />
+    {% if field_value %}
+        {% if field_type == 'content' %}
+            <a href="/admin/content/update/{{ field_value }}" target="_blank">{{ 'View content'|trans({}, 'customfields') }}</a>
+        {% elseif field_type == 'category' %}
+            <a href="/admin/categories/update?category_id={{ field_value }}" target="_blank">{{ 'View category'|trans({}, 'customfields') }}</a>
+        {% elseif field_type == 'folder' %}
+            <a href="/admin/folders/update/{{ field_value }}" target="_blank">{{ 'View folder'|trans({}, 'customfields') }}</a>
+        {% elseif field_type == 'product' %}
+            <a href="/admin/products/update/?product_id={{ field_value }}" target="_blank">{{ 'View product'|trans({}, 'customfields') }}</a>
+        {% endif %}
+    {% endif %}
+
+{% else %}
+    <input type="text" name="{{ field_name }}" class="form-control" value="{{ field_value }}"
+           placeholder="{{ 'Unsupported field type: %type'|trans({'%type': field_type}, 'customfields') }}" />
+{% endif %}

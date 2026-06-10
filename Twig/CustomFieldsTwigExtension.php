@@ -5,6 +5,7 @@ namespace CustomFields\Twig;
 use CustomFields\Model\CustomFieldImage;
 use CustomFields\Model\CustomFieldImageQuery;
 use CustomFields\Service\CustomFieldService;
+use CustomFields\Service\ImageService;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -14,6 +15,7 @@ class CustomFieldsTwigExtension extends AbstractExtension
     public function __construct(
         private readonly RequestStack $requestStack,
         private readonly CustomFieldService $customFieldService,
+        private readonly ImageService $imageService,
     ) {}
 
     public function getFunctions(): array
@@ -21,8 +23,38 @@ class CustomFieldsTwigExtension extends AbstractExtension
         return [
             new TwigFunction('custom_field_value', [$this, 'getCustomFieldValue']),
             new TwigFunction('custom_field_image', [$this, 'getCustomFieldImage']),
+            new TwigFunction('custom_field_images', [$this, 'getCustomFieldImages']),
             new TwigFunction('custom_field_repeater', [$this, 'getRepeaterValues']),
         ];
+    }
+
+    /**
+     * Return the images attached to a custom field value, as a list of {id, url}.
+     * Reproduces the legacy custom_field_image_loop for the Twig back-office.
+     *
+     * @return array<int, array{id: int, url: string}>
+     */
+    public function getCustomFieldImages(?int $customFieldValueId): array
+    {
+        if ($customFieldValueId === null) {
+            return [];
+        }
+
+        $images = CustomFieldImageQuery::create()
+            ->filterByCustomFieldValueId($customFieldValueId)
+            ->find();
+
+        $result = [];
+        /** @var CustomFieldImage $image */
+        foreach ($images as $image) {
+            [$fileUrl] = $this->imageService->imageProcess($image, false, 'none');
+            $result[] = [
+                'id' => $image->getId(),
+                'url' => $fileUrl ?? '',
+            ];
+        }
+
+        return $result;
     }
 
     /**

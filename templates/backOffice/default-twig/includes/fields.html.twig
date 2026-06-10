@@ -1,0 +1,90 @@
+{# Renders one custom field input (Twig BO). Field names are flat, read raw by CustomFieldValueController. #}
+<div class="mb-3">
+    {% if custom_field.type != 'repeater' %}
+        <label for="custom_field_{{ custom_field.id }}" class="form-label">
+            {{ custom_field.title }}
+        </label>
+    {% endif %}
+
+    {% if custom_field.type == 'text' %}
+        <input type="text" id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+               class="form-control" value="{{ values[custom_field.id]|default('') }}" />
+    {% elseif custom_field.type == 'textarea' %}
+        <textarea id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+                  class="form-control" rows="5">{{ values[custom_field.id]|default('') }}</textarea>
+    {% elseif custom_field.type == 'wysiwyg' %}
+        <textarea id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+                  class="form-control wysiwyg" rows="5">{{ values[custom_field.id]|default('') }}</textarea>
+    {% elseif custom_field.type == 'checkbox' %}
+        <input type="hidden" name="custom_field_{{ custom_field.id }}" value="0" />
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="custom_field_{{ custom_field.id }}"
+                   name="custom_field_{{ custom_field.id }}" value="1"
+                   {{ (values[custom_field.id]|default('')) == '1' ? 'checked' : '' }} />
+        </div>
+    {% elseif custom_field.type == 'content' %}
+        {% set value = values[custom_field.id]|default('') %}
+        <input type="number" id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+               class="form-control" value="{{ value }}" />
+        {% if value %}<a href="/admin/content/update/{{ value }}">{{ 'View content'|trans({}, 'customfields') }}</a>{% endif %}
+    {% elseif custom_field.type == 'folder' %}
+        {% set value = values[custom_field.id]|default('') %}
+        <input type="number" id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+               class="form-control" value="{{ value }}" />
+        {% if value %}<a href="/admin/folders/update/{{ value }}">{{ 'View folder'|trans({}, 'customfields') }}</a>{% endif %}
+    {% elseif custom_field.type == 'product' %}
+        {% set value = values[custom_field.id]|default('') %}
+        <input type="number" id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+               class="form-control" value="{{ value }}" />
+        {% if value %}<a href="/admin/products/update/?product_id={{ value }}">{{ 'View product'|trans({}, 'customfields') }}</a>{% endif %}
+    {% elseif custom_field.type == 'category' %}
+        {% set value = values[custom_field.id]|default('') %}
+        <input type="number" id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+               class="form-control" value="{{ value }}" />
+        {% if value %}<a href="/admin/categories/update?category_id={{ value }}">{{ 'View category'|trans({}, 'customfields') }}</a>{% endif %}
+    {% elseif custom_field.type == 'image' %}
+        <div class="d-flex align-items-center gap-2">
+            {% set customFieldValueId = value_ids[custom_field.id]|default('') %}
+            {% if customFieldValueId %}
+                {% for image in custom_field_images(customFieldValueId) %}
+                    <div class="mt-2 position-relative d-inline-block">
+                        <img src="{{ image.url }}" alt="{{ custom_field.title }}" style="width: 200px; height: 200px; object-fit: contain; display: block;" />
+                        <a href="/admin/module/customfields/image/delete/{{ image.id }}"
+                           class="btn btn-danger btn-sm delete-custom-field-image position-absolute"
+                           style="top: 5px; right: 5px; padding: 2px 6px;"
+                           data-confirm="{{ 'Are you sure you want to delete this image?'|trans({}, 'customfields') }}"
+                           title="{{ 'Delete image'|trans({}, 'customfields') }}">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <input type="file" id="custom_field_{{ custom_field.id }}" name="custom_field_{{ custom_field.id }}"
+                   class="form-control" accept="image/*" />
+        </div>
+    {% endif %}
+
+    {% if custom_field.type == 'repeater' %}
+        {% set repeater_id = custom_field.id %}
+        {% include './repeater-field.html.twig' with {
+            custom_field: custom_field,
+            rows: (repeater_values[repeater_id]|default([])),
+            sub_fields: (repeater_subfields[repeater_id]|default([])),
+            repeater_id: repeater_id,
+            repeater_subfields: repeater_subfields,
+            repeater_values: repeater_values,
+            depth: 0
+        } %}
+    {% endif %}
+
+    {% set codeArgs = "'" ~ custom_field.code ~ "'" %}
+    {% if source != 'general' %}
+        {% set codeArgs = codeArgs ~ ", '" ~ source ~ "'" %}
+    {% endif %}
+    {% if source != 'general' and (source starts with 'option_page_') == false %}
+        {% set codeArgs = codeArgs ~ ", source_id" %}
+    {% endif %}
+    <span class="form-text">
+        {{ 'Code: %code'|trans({'%code': '{{ custom_field_value(' ~ codeArgs ~ ') }}'}, 'customfields') }}
+    </span>
+</div>

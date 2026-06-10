@@ -1,0 +1,18 @@
+{% set current = admin_current_location|default('') %}
+<li class="{{ current == 'option_pages' ? 'active' : '' }}" id="option_pages_menu">
+    <a title="{{ 'Option Pages'|trans({}, 'customfields') }}" href="#collapse-option-pages" {{ current == 'option_pages' ? 'class="open"' : '' }}>
+        <i class="bi bi-file-earmark-text"></i>
+        <span class="item-text">{{ 'Option Pages'|trans({}, 'customfields') }}</span>
+        <i class="bi bi-chevron-right menu-collapse"></i>
+    </a>
+
+    <ul id="collapse-option-pages" class="collapse {{ current == 'option_pages' ? 'show' : '' }}" role="menu">
+        {% for page in option_pages %}
+            <li role="menuitem">
+                <a href="/admin/module/customfields/option-pages/view/{{ page.id }}">
+                    {{ page.title }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</li>

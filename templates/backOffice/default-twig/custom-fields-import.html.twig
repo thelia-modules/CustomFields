@@ -1,0 +1,35 @@
+{# Included by custom-field-list.html.twig — import/export tab (Twig BO). #}
+<div style="margin-bottom: 50px; margin-top: 20px;">
+    <h2>{{ 'Export'|trans({}, 'customfields') }}</h2>
+    <p>{{ 'Generates a JSON file to export the existing custom fields. It can be re-imported on another site to reuse the custom fields (new ones are created, existing ones are kept).'|trans({}, 'customfields') }}</p>
+    <div>
+        <a href="/admin/module/customfields/export" class="btn btn-sm btn-success">
+            <i class="bi bi-download"></i>
+            {{ 'Export custom fields'|trans({}, 'customfields') }}
+        </a>
+    </div>
+</div>
+
+<div class="form-container">
+    <h2>{{ 'Import'|trans({}, 'customfields') }}</h2>
+
+    <form action="/admin/module/customfields/import" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="{{ import_form.vars.full_name }}[_token]" value="{{ import_form._token.vars.value }}" />
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="{{ import_form.json_file.vars.id }}" class="form-label">
+                        {{ import_form.json_file.vars.label }}
+                    </label>
+                    <input type="file" id="{{ import_form.json_file.vars.id }}"
+                           name="{{ import_form.json_file.vars.full_name }}" class="form-control" accept=".json">
+                </div>
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary mt-4">
+                        {{ 'Import'|trans({}, 'customfields') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

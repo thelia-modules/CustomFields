@@ -32,7 +32,7 @@ class ConfigurationHook extends BaseHook
         }
 
         $event->add(
-            $this->render('includes/option-pages-menu.html', [
+            $this->render('includes/option-pages-menu.html.twig', [
                 'option_pages' => $optionPages,
             ])
         );

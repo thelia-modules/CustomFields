@@ -1,0 +1,71 @@
+{# Hook fragment: custom fields tab content for product/content/category/folder edit (Twig BO). #}
+<div class="form-container">
+    <form method="POST"
+          action="/admin/module/customfields/values/save"
+          enctype="multipart/form-data"
+          class="clearfix">
+
+        <input type="hidden" name="{{ value_form.source_id.vars.full_name }}" value="{{ source_id }}" />
+        <input type="hidden" name="{{ value_form.source.vars.full_name }}" value="{{ source }}" />
+        <input type="hidden" name="{{ value_form.vars.full_name }}[_token]" value="{{ value_form._token.vars.value }}" />
+        <input type="hidden" name="edit_language_id" value="{{ edit_language_id }}" />
+
+        {% include 'includes/inner-form-toolbar.html.twig' with {
+            hide_flags: false,
+            hide_submit_buttons: false,
+            langs: langs,
+            edit_language_id: edit_language_id,
+            page_url: page_url
+        } %}
+
+        {% if custom_fields|length > 0 %}
+            {% include './includes/fields-list.html.twig' with {
+                source: source,
+                grouped_fields: grouped_fields,
+                values: values,
+                value_ids: value_ids,
+                repeater_values: repeater_values,
+                repeater_subfields: repeater_subfields
+            } %}
+
+            {% include 'includes/inner-form-toolbar.html.twig' with {
+                hide_flags: false,
+                hide_submit_buttons: false,
+                langs: langs,
+                edit_language_id: edit_language_id,
+                page_url: page_url,
+                page_bottom: true
+            } %}
+        {% else %}
+            <div class="alert alert-info">
+                {{ 'No custom fields defined for this source.'|trans({}, 'customfields') }}
+            </div>
+        {% endif %}
+    </form>
+    {{ safe_hook('wysiwyg.js', {location: 'wysiwyg-customfields-edit-js'}) }}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form[action*="customfields/values/save"]');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const fileInputs = form.querySelectorAll('input[type="file"]');
+                fileInputs.forEach(function(input) {
+                    if (!input.files || input.files.length === 0 || input.files[0].size === 0) {
+                        input.removeAttribute('name');
+                    }
+                });
+            });
+        }
+
+        document.querySelectorAll('.delete-custom-field-image').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                const confirmMessage = this.getAttribute('data-confirm');
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+    </script>
+</div>

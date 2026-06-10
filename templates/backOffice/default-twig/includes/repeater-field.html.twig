@@ -1,0 +1,322 @@
+{#
+    Recursive rendering of repeater fields (Twig BO).
+    Expected vars:
+    - custom_field : the repeater CustomField
+    - rows : existing rows
+    - sub_fields : the repeater sub-fields
+    - repeater_id : the repeater id
+    - parent_path : parent path used to build field names (e.g. "custom_field_5_0")
+    - depth : current depth (recursion guard)
+    Field names are flat: they are read raw by CustomFieldValueController.
+#}
+{% set max_depth = 5 %}
+{% set depth = depth|default(0) %}
+
+{% if depth >= max_depth %}
+    <div class="alert alert-warning">
+        {{ 'Maximum repeater depth reached'|trans({}, 'customfields') }}
+    </div>
+{% else %}
+    {% set repeater_id = custom_field.id %}
+    {% set full_field_name = parent_path|default('custom_field') %}
+    {% set full_field_id = full_field_name ~ '_' ~ repeater_id %}
+    {% set row_count = rows|length %}
+
+    <style>
+        .acf-row-sortable-ghost { opacity: 0.4; background: #f0f0f0; }
+        .acf-row-sortable-chosen { box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .acf-row-sortable-drag { opacity: 0.8; transform: rotate(2deg); }
+        .bi-arrows-move { cursor: grab; }
+        .bi-arrows-move:active { cursor: grabbing; }
+    </style>
+
+    {% if depth == 0 %}
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    {% endif %}
+
+    <div class="acf-repeater-field">
+        <div class="acf-repeater-header d-flex align-items-center justify-content-between mb-2">
+            <h5 class="form-label m-0" style="font-weight:600; font-size:14px;">
+                {{ custom_field.title }}
+                <span class="badge text-bg-secondary" style="font-size:11px; font-weight:normal; margin-left:5px;">{{ 'Repeater'|trans({}, 'customfields') }}</span>
+            </h5>
+            <a href="/admin/module/customfields/update/{{ repeater_id }}" class="btn btn-secondary btn-sm" title="{{ 'Manage sub-fields'|trans({}, 'customfields') }}">
+                <i class="bi bi-gear"></i> {{ 'Manage sub-fields'|trans({}, 'customfields') }}
+            </a>
+        </div>
+
+        {% if sub_fields|length == 0 %}
+            <div class="alert alert-warning mb-2">
+                <i class="bi bi-exclamation-triangle"></i>
+                {{ 'No sub-field defined for this repeater.'|trans({}, 'customfields') }}
+                <a href="/admin/module/customfields/update/{{ repeater_id }}" class="alert-link">
+                    {{ 'Click here to add one.'|trans({}, 'customfields') }}
+                </a>
+            </div>
+        {% else %}
+            <div class="acf-repeater" id="{{ full_field_id }}" data-repeater-id="{{ repeater_id }}" data-parent-path="{{ parent_path|default('') }}" data-depth="{{ depth }}">
+                <input type="hidden" name="{{ full_field_id }}_rows" value="{{ row_count }}" class="acf-row-count" />
+
+                <div class="acf-rows" id="{{ full_field_id }}_rows_container">
+                    {% for row in (row_count > 0 ? 0..(row_count - 1) : []) %}
+                        {% set row_id = rows[row]['__row_id']|default('') %}
+                        {% set current_row_path = full_field_id ~ '_' ~ row %}
+
+                        <div class="acf-row card mb-1" data-row-index="{{ row }}">
+                            <div class="acf-row-header card-header" style="padding:8px 12px; cursor:pointer; user-select:none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="acf-row-label d-flex align-items-center gap-2">
+                                        <i class="bi bi-arrows-move" style="color:#aaa; cursor:grab;"></i>
+                                        <strong class="acf-row-number">{{ 'Row'|trans({}, 'customfields') }} {{ row + 1 }}</strong>
+                                    </span>
+                                    <div class="d-flex gap-1">
+                                        <button type="button" class="btn btn-danger btn-sm acf-remove-row" title="{{ 'Remove this row'|trans({}, 'customfields') }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="acf-row-body card-body" style="padding:15px;">
+                                <input type="hidden" name="{{ current_row_path }}_row_id" value="{{ row_id }}" class="acf-row-id-input" />
+
+                                {% for sub_field in sub_fields %}
+                                    {% set sub_field_id = sub_field.id %}
+                                    {% set sub_field_type = sub_field.type %}
+                                    {% set value = (rows[row] is defined and rows[row][sub_field_id] is defined) ? rows[row][sub_field_id] : '' %}
+
+                                    {% if sub_field_type == 'repeater' %}
+                                        <div class="mb-3 ps-3" style="border-left:3px solid #ddd;">
+                                            {% include './repeater-field.html.twig' with {
+                                                custom_field: sub_field,
+                                                rows: (value ?: []),
+                                                sub_fields: (repeater_subfields[sub_field_id]|default([])),
+                                                repeater_id: sub_field_id,
+                                                parent_path: current_row_path,
+                                                repeater_subfields: repeater_subfields,
+                                                repeater_values: repeater_values,
+                                                depth: depth + 1
+                                            } %}
+                                        </div>
+                                    {% else %}
+                                        <div class="mb-3">
+                                            <label class="form-label d-block" style="font-weight:600; margin-bottom:4px;">{{ sub_field.title }}</label>
+                                            {% include './field-input.html.twig' with {
+                                                field_type: sub_field_type,
+                                                field_name: current_row_path ~ '_' ~ sub_field_id,
+                                                field_value: value,
+                                                sub_field: sub_field
+                                            } %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    {% if row_count == 0 %}
+                        <div class="acf-no-rows alert alert-info mb-1">
+                            <i class="bi bi-info-circle"></i>
+                            {{ 'No row yet.'|trans({}, 'customfields') }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {# Template for new rows #}
+                <template id="{{ full_field_id }}_template">
+                    <div class="acf-row card mb-1" data-row-index="0">
+                        <div class="acf-row-header card-header" style="padding:8px 12px; cursor:pointer; user-select:none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="acf-row-label d-flex align-items-center gap-2">
+                                    <i class="bi bi-arrows-move" style="color:#aaa; cursor:grab;"></i>
+                                    <strong class="acf-row-number">{{ 'Row'|trans({}, 'customfields') }} 1</strong>
+                                </span>
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-secondary btn-sm acf-row-toggle" title="{{ 'Collapse/Expand'|trans({}, 'customfields') }}">
+                                        <i class="bi bi-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm acf-remove-row" title="{{ 'Remove this row'|trans({}, 'customfields') }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="acf-row-body card-body" style="padding:15px;">
+                            <input type="hidden" name="{{ full_field_id }}_0_row_id" value="" class="acf-row-id-input" />
+                            {% for sub_field in sub_fields %}
+                                {% if sub_field.type == 'repeater' %}
+                                    <div class="mb-3 ps-3" style="border-left:3px solid #ddd;">
+                                        {% include './repeater-field.html.twig' with {
+                                            custom_field: sub_field,
+                                            rows: [],
+                                            sub_fields: (repeater_subfields[sub_field.id]|default([])),
+                                            repeater_id: sub_field.id,
+                                            parent_path: full_field_id ~ '_0',
+                                            repeater_subfields: repeater_subfields,
+                                            repeater_values: repeater_values,
+                                            depth: depth + 1
+                                        } %}
+                                    </div>
+                                {% else %}
+                                    <div class="mb-3">
+                                        <label class="form-label d-block" style="font-weight:600; margin-bottom:4px;">{{ sub_field.title }}</label>
+                                        {% include './field-input.html.twig' with {
+                                            field_type: sub_field.type,
+                                            field_name: full_field_id ~ '_0_' ~ sub_field.id,
+                                            field_value: '',
+                                            sub_field: sub_field
+                                        } %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </template>
+
+                <div class="mt-2 p-2 text-center" style="border:2px dashed #ddd; border-radius:4px; background:#fafafa;">
+                    <button type="button" class="btn btn-success btn-sm acf-add-row" data-repeater-full-id="{{ full_field_id }}">
+                        <i class="bi bi-plus-lg"></i> {{ 'Add a row'|trans({}, 'customfields') }}
+                    </button>
+                </div>
+            </div>
+
+            <script>
+            (() => {
+                const fullFieldId = '{{ full_field_id }}';
+                const container = document.getElementById(fullFieldId);
+                if (!container) return;
+
+                const rowsContainer = document.getElementById(fullFieldId + '_rows_container');
+                const rowCountInput = container.querySelector('.acf-row-count');
+                const templateEl = document.getElementById(fullFieldId + '_template');
+
+                const getRowCount = () => rowsContainer.querySelectorAll(':scope > .acf-row').length;
+
+                const updateRowNumbers = () => {
+                    const rows = rowsContainer.querySelectorAll(':scope > .acf-row');
+                    rows.forEach((row, index) => {
+                        row.dataset.rowIndex = index;
+                        const label = row.querySelector(':scope > .acf-row-header .acf-row-number');
+                        if (label) {
+                            const baseText = label.textContent.replace(/\d+$/, '');
+                            label.textContent = baseText + (index + 1);
+                        }
+
+                        const rowIdInput = row.querySelector(':scope > .acf-row-body > .acf-row-id-input');
+                        if (rowIdInput) {
+                            const savedRowId = rowIdInput.value;
+                            const pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_row_id)');
+                            rowIdInput.name = rowIdInput.name.replace(pattern, '$1' + index + '$2');
+                            rowIdInput.value = savedRowId;
+                        }
+
+                        row.querySelectorAll(':scope > .acf-row-body input[name], :scope > .acf-row-body textarea[name]').forEach((el) => {
+                            if (el === rowIdInput) return;
+                            const pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
+                            if (el.classList.contains('acf-row-id-input')) {
+                                const savedValue = el.value;
+                                el.name = el.name.replace(pattern, '$1' + index + '$2');
+                                el.value = savedValue;
+                            } else {
+                                el.name = el.name.replace(pattern, '$1' + index + '$2');
+                            }
+                        });
+                    });
+                    rowCountInput.value = rows.length;
+                };
+
+                const initSortable = () => {
+                    if (window.Sortable && rowsContainer) {
+                        new Sortable(rowsContainer, {
+                            animation: 150,
+                            handle: '.bi-arrows-move',
+                            ghostClass: 'acf-row-sortable-ghost',
+                            chosenClass: 'acf-row-sortable-chosen',
+                            dragClass: 'acf-row-sortable-drag',
+                            onEnd: () => { updateRowNumbers(); }
+                        });
+                    }
+                };
+
+                if (window.Sortable) {
+                    initSortable();
+                } else {
+                    const checkSortable = setInterval(() => {
+                        if (window.Sortable) {
+                            clearInterval(checkSortable);
+                            initSortable();
+                        }
+                    }, 100);
+                }
+
+                const bindRowEvents = (row) => {
+                    const header = row.querySelector(':scope > .acf-row-header');
+                    const body = row.querySelector(':scope > .acf-row-body');
+                    const toggleBtn = row.querySelector(':scope > .acf-row-header .acf-row-toggle');
+                    const removeBtn = row.querySelector(':scope > .acf-row-header .acf-remove-row');
+
+                    if (!header || !removeBtn) return;
+
+                    header.addEventListener('click', (e) => {
+                        if (e.target.closest('.acf-remove-row') || e.target.closest('.acf-row-toggle')) return;
+                        const isOpen = body.style.display !== 'none';
+                        body.style.display = isOpen ? 'none' : '';
+                        const icon = toggleBtn ? toggleBtn.querySelector('.bi') : null;
+                        if (icon) {
+                            icon.className = isOpen ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+                        }
+                    });
+
+                    removeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm({{ 'Remove this row?'|trans({}, 'customfields')|json_encode|raw }})) {
+                            row.remove();
+                            updateRowNumbers();
+                            const noRows = rowsContainer.querySelector('.acf-no-rows');
+                            if (noRows) noRows.style.display = getRowCount() === 0 ? '' : 'none';
+                        }
+                    });
+                };
+
+                rowsContainer.querySelectorAll(':scope > .acf-row').forEach(bindRowEvents);
+
+                const addBtn = container.querySelector('.acf-add-row[data-repeater-full-id="' + fullFieldId + '"]');
+                if (addBtn) {
+                    addBtn.addEventListener('click', () => {
+                        if (!templateEl || !templateEl.content) return;
+
+                        const clone = document.importNode(templateEl.content.querySelector('.acf-row'), true);
+                        const newIndex = getRowCount();
+
+                        clone.dataset.rowIndex = newIndex;
+                        const label = clone.querySelector('.acf-row-number');
+                        if (label) {
+                            const baseText = label.textContent.replace(/\d+$/, '');
+                            label.textContent = baseText + (newIndex + 1);
+                        }
+
+                        clone.querySelectorAll('[name]').forEach((el) => {
+                            const pattern = new RegExp('(' + fullFieldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '_)\\d+(_)');
+                            el.name = el.name.replace(pattern, '$1' + newIndex + '$2');
+
+                            if (el.classList.contains('acf-row-id-input')) {
+                                el.value = '';
+                            } else if (el.tagName === 'INPUT' && el.type !== 'file' && el.type !== 'hidden') {
+                                el.value = '';
+                            } else if (el.tagName === 'TEXTAREA') {
+                                el.value = '';
+                            }
+                        });
+
+                        rowsContainer.appendChild(clone);
+                        bindRowEvents(clone);
+                        rowCountInput.value = getRowCount();
+
+                        const noRows = rowsContainer.querySelector('.acf-no-rows');
+                        if (noRows) noRows.style.display = 'none';
+                    });
+                }
+            })();
+            </script>
+        {% endif %}
+    </div>
+{% endif %}

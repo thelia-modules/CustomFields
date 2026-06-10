@@ -1,0 +1,64 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Custom Fields'|trans({}, 'customfields') }}{% endblock %}
+
+{% block content %}
+    {% if app.request.query.get('success') is not empty %}
+        <div class="alert alert-success">{{ app.request.query.get('success') }}</div>
+    {% endif %}
+    {% if app.request.query.get('error') is not empty %}
+        <div class="alert alert-danger">{{ app.request.query.get('error') }}</div>
+    {% endif %}
+
+    <div class="general-block-decorator">
+        {# Tab navigation #}
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {{ (not current_tab or current_tab == 'fields') ? 'active' : '' }}" href="#fields" role="tab" data-bs-toggle="tab">
+                    {{ 'Custom Fields'|trans({}, 'customfields') }}
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {{ current_tab == 'general_values' ? 'active' : '' }}" href="#general_values" role="tab" data-bs-toggle="tab">
+                    {{ 'General Values'|trans({}, 'customfields') }}
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {{ current_tab == 'import' ? 'active' : '' }}" href="#import" role="tab" data-bs-toggle="tab">
+                    {{ 'Import / Export'|trans({}, 'customfields') }}
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {{ current_tab == 'option_pages' ? 'active' : '' }}" href="#option_pages" role="tab" data-bs-toggle="tab">
+                    <i class="bi bi-file-earmark-text"></i> {{ 'Option Pages'|trans({}, 'customfields') }}
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane {{ (not current_tab or current_tab == 'fields') ? 'active' : '' }}" id="fields">
+                <div class="row"><div class="col-md-12">
+                    {% include 'custom-fields-listing.html.twig' %}
+                </div></div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane {{ current_tab == 'general_values' ? 'active' : '' }}" id="general_values">
+                <div class="row"><div class="col-md-12">
+                    {% include 'custom-fields-general-values.html.twig' %}
+                </div></div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane {{ current_tab == 'import' ? 'active' : '' }}" id="import">
+                <div class="row"><div class="col-md-12">
+                    {% include 'custom-fields-import.html.twig' %}
+                </div></div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane {{ current_tab == 'option_pages' ? 'active' : '' }}" id="option_pages">
+                <div class="row"><div class="col-md-12">
+                    {% include 'custom-fields-option-pages.html.twig' %}
+                </div></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

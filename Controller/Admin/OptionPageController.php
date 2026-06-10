@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CustomFields\Controller\Admin;
 
+use CustomFields\Form\CustomFieldValueForm;
 use CustomFields\Form\OptionPageForm;
 use CustomFields\Model\CustomFieldOptionPage;
 use CustomFields\Model\CustomFieldOptionPageQuery;
@@ -46,6 +47,7 @@ final class OptionPageController extends BaseAdminController
 
         return $this->render('option-pages-list', [
             'option_pages' => $optionPages,
+            'option_page_form' => $this->createForm(OptionPageForm::getName())->getForm()->createView(),
         ]);
     }
 
@@ -194,6 +196,11 @@ final class OptionPageController extends BaseAdminController
             'repeater_subfields' => $repeaterSubfields,
             'source' => $source,
             'edit_language_id' => $editLanguageId,
+            'langs' => LangQuery::create()->filterByActive(1)->find(),
+            'value_form' => $this->createForm(CustomFieldValueForm::getName(), FormType::class, [
+                'source' => $source,
+                'source_id' => (string) $optionPage->getId(),
+            ])->getForm()->createView(),
         ]);
     }
 }

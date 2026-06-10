@@ -6,6 +6,8 @@ namespace CustomFields\Controller\Admin;
 
 use CustomFields\Form\CustomFieldForm;
 use CustomFields\Form\CustomFieldImportForm;
+use CustomFields\Form\CustomFieldValueForm;
+use CustomFields\Form\OptionPageForm;
 use CustomFields\Model\CustomField;
 use CustomFields\Model\CustomFieldParent;
 use CustomFields\Model\CustomFieldParentQuery;
@@ -120,6 +122,13 @@ final class CustomFieldController extends BaseAdminController
         // Get option pages
         $optionPages = CustomFieldOptionPageQuery::create()->orderByTitle()->find();
 
+        $valueForm = $this->createForm(CustomFieldValueForm::getName(), FormType::class, [
+            'source' => 'general',
+            'source_id' => '1',
+        ]);
+        $optionPageForm = $this->createForm(OptionPageForm::getName());
+        $importForm = $this->createForm(CustomFieldImportForm::getName());
+
         return $this->render('custom-field-list', [
             'custom_fields' => $customFields,
             'current_tab' => $currentTab,
@@ -132,6 +141,10 @@ final class CustomFieldController extends BaseAdminController
             'edit_language_id' => $editLanguageId,
             'option_pages' => $optionPages,
             'subfield_repeater_map' => $subfieldRepeaterMap,
+            'langs' => LangQuery::create()->filterByActive(1)->find(),
+            'value_form' => $valueForm->getForm()->createView(),
+            'option_page_form' => $optionPageForm->getForm()->createView(),
+            'import_form' => $importForm->getForm()->createView(),
         ]);
     }
 
@@ -189,6 +202,7 @@ final class CustomFieldController extends BaseAdminController
             'parents' => $parents,
             'sub_fields' => [],
             'parent_repeater' => $parentRepeater,
+            'form' => $form->getForm()->createView(),
         ]);
     }
 
@@ -340,6 +354,7 @@ final class CustomFieldController extends BaseAdminController
             'parents' => $parents,
             'sub_fields' => $subFields,
             'parent_repeater' => $parentRepeater,
+            'form' => $form->getForm()->createView(),
         ]);
     }
 

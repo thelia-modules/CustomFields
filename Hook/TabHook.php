@@ -3,12 +3,14 @@
 namespace CustomFields\Hook;
 
 use CustomFields\CustomFields;
+use CustomFields\Form\CustomFieldValueForm;
 use CustomFields\Model\CustomFieldQuery;
 use CustomFields\Model\CustomFieldValueQuery;
 use CustomFields\Service\CustomFieldSortingService;
 use CustomFields\Service\RepeaterDataLoaderService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
+use Thelia\Core\Form\TheliaFormFactory;
 use Thelia\Core\Hook\BaseHook;
 use Thelia\Core\Template\Parser\ParserResolver;
 use Thelia\Model\Category;
@@ -24,12 +26,24 @@ use Thelia\Model\ProductQuery;
 class TabHook extends BaseHook
 {
     public function __construct(
+        private readonly CustomFieldSortingService $sortingService,
+        private readonly RepeaterDataLoaderService $repeaterDataLoader,
+        private readonly TheliaFormFactory $formFactory,
         ?EventDispatcherInterface $dispatcher = null,
         ?ParserResolver $parserResolver = null,
-        private readonly CustomFieldSortingService $sortingService,
-        private readonly RepeaterDataLoaderService $repeaterDataLoader
     ) {
         parent::__construct($dispatcher, $parserResolver);
+    }
+
+    private function buildValueFormView(string $source, ?int $sourceId): \Symfony\Component\Form\FormView
+    {
+        return $this->formFactory
+            ->createForm(CustomFieldValueForm::getName(), data: [
+                'source' => $source,
+                'source_id' => (string) ($sourceId ?? ''),
+            ])
+            ->createView()
+            ->getView();
     }
 
     public function onProductTab(HookRenderBlockEvent $event): void
@@ -89,7 +103,7 @@ class TabHook extends BaseHook
             'id' => 'custom_fields',
             'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                'custom-fields-tab.html',
+                'custom-fields-tab.html.twig',
                 [
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
@@ -100,6 +114,8 @@ class TabHook extends BaseHook
                     'source' => 'product',
                     'source_id' => $productId,
                     'edit_language_id' => $editLanguageId,
+                    'langs' => LangQuery::create()->filterByActive(1)->find(),
+                    'value_form' => $this->buildValueFormView('product', $productId),
                     'page_url' => '/admin/products/update?product_id='.$productId,
                 ]
             ),
@@ -161,7 +177,7 @@ class TabHook extends BaseHook
             'id' => 'custom_fields',
             'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                'custom-fields-tab.html',
+                'custom-fields-tab.html.twig',
                 [
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
@@ -172,6 +188,8 @@ class TabHook extends BaseHook
                     'source' => 'content',
                     'source_id' => $contentId,
                     'edit_language_id' => $editLanguageId,
+                    'langs' => LangQuery::create()->filterByActive(1)->find(),
+                    'value_form' => $this->buildValueFormView('content', $contentId),
                     'page_url' => '/admin/content/update/'.$contentId,
                 ]
             ),
@@ -233,7 +251,7 @@ class TabHook extends BaseHook
             'id' => 'custom_fields',
             'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                'custom-fields-tab.html',
+                'custom-fields-tab.html.twig',
                 [
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
@@ -244,6 +262,8 @@ class TabHook extends BaseHook
                     'source' => 'category',
                     'source_id' => $categoryId,
                     'edit_language_id' => $editLanguageId,
+                    'langs' => LangQuery::create()->filterByActive(1)->find(),
+                    'value_form' => $this->buildValueFormView('category', $categoryId),
                     'page_url' => '/admin/categories/update?category_id='.$categoryId,
                 ]
             ),
@@ -305,7 +325,7 @@ class TabHook extends BaseHook
             'id' => 'custom_fields',
             'title' => $this->trans('Custom Fields', [], CustomFields::DOMAIN_NAME),
             'content' => $this->render(
-                'custom-fields-tab.html',
+                'custom-fields-tab.html.twig',
                 [
                     'custom_fields' => $customFields,
                     'grouped_fields' => $groupedFields,
@@ -316,6 +336,8 @@ class TabHook extends BaseHook
                     'source' => 'folder',
                     'source_id' => $folderId,
                     'edit_language_id' => $editLanguageId,
+                    'langs' => LangQuery::create()->filterByActive(1)->find(),
+                    'value_form' => $this->buildValueFormView('folder', $folderId),
                     'page_url' => '/admin/folders/update/'.$folderId,
                 ]
             ),
