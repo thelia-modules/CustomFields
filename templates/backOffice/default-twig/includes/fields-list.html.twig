@@ -2,7 +2,7 @@
 <div>
     {# Fields without parent #}
     {% for custom_field in grouped_fields.no_parent %}
-        {% include './fields.html.twig' with { custom_field: custom_field } %}
+        {% include '@CustomFieldsModule/backOffice/default-twig/includes/fields.html.twig' with { custom_field: custom_field } %}
     {% endfor %}
 
     {# Parent field groups #}
@@ -15,7 +15,7 @@
             </div>
             <div class="card-body">
                 {% for custom_field in parent_group.children %}
-                    {% include './fields.html.twig' with { custom_field: custom_field, source: source } %}
+                    {% include '@CustomFieldsModule/backOffice/default-twig/includes/fields.html.twig' with { custom_field: custom_field, source: source } %}
                 {% endfor %}
             </div>
         </div>

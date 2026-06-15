@@ -41,7 +41,7 @@
                                 page_url: '/admin/module/customfields/option-pages/view/' ~ option_page.id
                             } %}
 
-                            {% include './includes/fields-list.html.twig' with {
+                            {% include '@CustomFieldsModule/backOffice/default-twig/includes/fields-list.html.twig' with {
                                 grouped_fields: grouped_fields,
                                 values: values,
                                 value_ids: value_ids,

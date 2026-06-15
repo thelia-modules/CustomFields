@@ -86,7 +86,7 @@
 
                                     {% if sub_field_type == 'repeater' %}
                                         <div class="mb-3 ps-3" style="border-left:3px solid #ddd;">
-                                            {% include './repeater-field.html.twig' with {
+                                            {% include '@CustomFieldsModule/backOffice/default-twig/includes/repeater-field.html.twig' with {
                                                 custom_field: sub_field,
                                                 rows: (value ?: []),
                                                 sub_fields: (repeater_subfields[sub_field_id]|default([])),
@@ -100,7 +100,7 @@
                                     {% else %}
                                         <div class="mb-3">
                                             <label class="form-label d-block" style="font-weight:600; margin-bottom:4px;">{{ sub_field.title }}</label>
-                                            {% include './field-input.html.twig' with {
+                                            {% include '@CustomFieldsModule/backOffice/default-twig/includes/field-input.html.twig' with {
                                                 field_type: sub_field_type,
                                                 field_name: current_row_path ~ '_' ~ sub_field_id,
                                                 field_value: value,
@@ -145,7 +145,7 @@
                             {% for sub_field in sub_fields %}
                                 {% if sub_field.type == 'repeater' %}
                                     <div class="mb-3 ps-3" style="border-left:3px solid #ddd;">
-                                        {% include './repeater-field.html.twig' with {
+                                        {% include '@CustomFieldsModule/backOffice/default-twig/includes/repeater-field.html.twig' with {
                                             custom_field: sub_field,
                                             rows: [],
                                             sub_fields: (repeater_subfields[sub_field.id]|default([])),
@@ -159,7 +159,7 @@
                                 {% else %}
                                     <div class="mb-3">
                                         <label class="form-label d-block" style="font-weight:600; margin-bottom:4px;">{{ sub_field.title }}</label>
-                                        {% include './field-input.html.twig' with {
+                                        {% include '@CustomFieldsModule/backOffice/default-twig/includes/field-input.html.twig' with {
                                             field_type: sub_field.type,
                                             field_name: full_field_id ~ '_0_' ~ sub_field.id,
                                             field_value: '',

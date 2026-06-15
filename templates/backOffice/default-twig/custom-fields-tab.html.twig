@@ -19,7 +19,7 @@
         } %}
 
         {% if custom_fields|length > 0 %}
-            {% include './includes/fields-list.html.twig' with {
+            {% include '@CustomFieldsModule/backOffice/default-twig/includes/fields-list.html.twig' with {
                 source: source,
                 grouped_fields: grouped_fields,
                 values: values,

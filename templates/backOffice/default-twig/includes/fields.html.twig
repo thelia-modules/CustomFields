@@ -66,7 +66,7 @@
 
     {% if custom_field.type == 'repeater' %}
         {% set repeater_id = custom_field.id %}
-        {% include './repeater-field.html.twig' with {
+        {% include '@CustomFieldsModule/backOffice/default-twig/includes/repeater-field.html.twig' with {
             custom_field: custom_field,
             rows: (repeater_values[repeater_id]|default([])),
             sub_fields: (repeater_subfields[repeater_id]|default([])),
