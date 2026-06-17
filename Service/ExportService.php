@@ -75,8 +75,8 @@ class ExportService
 
             $parent = 'no_parent';
             if (null !== $customField->getCustomFieldParentId()) {
-                $parentField = CustomFieldQuery::create()
-                    ->findById($customField->getCustomFieldParentId());
+                $parentField = CustomFieldParentQuery::create()
+                    ->findOneById($customField->getCustomFieldParentId());
 
                 $parent = $parentField->getTitle();
             }
