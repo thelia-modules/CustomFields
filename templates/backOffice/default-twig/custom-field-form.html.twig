@@ -93,7 +93,7 @@
                                 <label for="{{ form.sources.vars.label_attr.for }}" class="form-label">
                                     {{ form.sources.vars.label }}{% if form.sources.vars.required %} <span class="required">*</span>{% endif %}
                                 </label>
-                                <select id="{{ form.sources.vars.label_attr.for }}" name="{{ form.sources.vars.full_name }}[]" class="form-control" {{ form.sources.vars.required ? 'required' : '' }} multiple>
+                                <select id="{{ form.sources.vars.label_attr.for }}" name="{{ form.sources.vars.full_name }}" class="form-control" {{ form.sources.vars.required ? 'required' : '' }} multiple>
                                     {% for choice in form.sources.vars.choices %}
                                         <option value="{{ choice.value }}" {{ form.sources.vars.value is iterable and choice.value in form.sources.vars.value ? 'selected' : '' }}>{{ choice.label }}</option>
                                     {% endfor %}
