@@ -11,7 +11,7 @@
         <input type="hidden" name="edit_language_id" value="{{ edit_language_id }}" />
 
         {% include 'includes/inner-form-toolbar.html.twig' with {
-            hide_flags: false,
+            hide_flags: true,
             hide_submit_buttons: false,
             langs: langs,
             edit_language_id: edit_language_id,
@@ -29,7 +29,7 @@
             } %}
 
             {% include 'includes/inner-form-toolbar.html.twig' with {
-                hide_flags: false,
+                hide_flags: true,
                 hide_submit_buttons: false,
                 langs: langs,
                 edit_language_id: edit_language_id,
