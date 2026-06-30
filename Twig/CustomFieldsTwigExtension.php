@@ -72,7 +72,7 @@ class CustomFieldsTwigExtension extends AbstractExtension
     {
         // If no locale provided, use current session locale
         if ($locale === null) {
-            $locale = $this->requestStack->getCurrentRequest()->getSession()->getLang()->getLocale();
+            $locale = $this->resolveCurrentLocale();
         }
 
         return $this->customFieldService->getCustomFieldValue($code, $source, $sourceId, $locale);
@@ -85,7 +85,7 @@ class CustomFieldsTwigExtension extends AbstractExtension
     public function getCustomFieldImage(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): ?int
     {
         if ($locale === null) {
-            $locale = $this->requestStack->getCurrentRequest()->getSession()->getLang()->getLocale();
+            $locale = $this->resolveCurrentLocale();
         }
 
         $imageId = $this->customFieldService->getCustomFieldValue($code, $source, $sourceId, $locale);
@@ -96,9 +96,24 @@ class CustomFieldsTwigExtension extends AbstractExtension
     public function getRepeaterValues(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): array
     {
         if ($locale === null) {
-            $locale = $this->requestStack->getCurrentRequest()->getSession()->getLang()->getLocale();
+            $locale = $this->resolveCurrentLocale();
         }
 
         return $this->customFieldService->getRepeaterValues($code, $source, $sourceId, $locale);
+    }
+
+    /**
+     * Resolve the current locale from the session, falling back to the default
+     * language locale in sessionless contexts (CLI, error pages).
+     */
+    private function resolveCurrentLocale(): string
+    {
+        $request = $this->requestStack->getCurrentRequest();
+
+        if (null !== $request && $request->hasSession()) {
+            return $request->getSession()->getLang()->getLocale();
+        }
+
+        return \Thelia\Model\LangQuery::create()->findOneByByDefault(true)?->getLocale() ?? 'en_US';
     }
 }

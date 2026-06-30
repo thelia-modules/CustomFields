@@ -19,6 +19,7 @@ use Thelia\Model\Content;
 use Thelia\Model\ContentQuery;
 use Thelia\Model\Folder;
 use Thelia\Model\FolderQuery;
+use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Product;
 use Thelia\Model\ProductQuery;
@@ -49,7 +50,11 @@ class TabHook extends BaseHook
     public function onProductTab(HookRenderBlockEvent $event): void
     {
         $productId = (int) $event->getArgument('id');
-        $editLanguageId = (int) $this->getRequest()->query->get('edit_language_id', $this->getSession()->getLang()->getId());
+        $request = $this->getRequest();
+        $defaultLanguageId = (null !== $request && $request->hasSession())
+            ? $this->getSession()->getLang()->getId()
+            : Lang::getDefaultLanguage()->getId();
+        $editLanguageId = (int) ($request?->query->get('edit_language_id', $defaultLanguageId) ?? $defaultLanguageId);
         $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
         /** @var Product $product */
         $product = ProductQuery::create()
@@ -125,7 +130,11 @@ class TabHook extends BaseHook
     public function onContentTab(HookRenderBlockEvent $event): void
     {
         $contentId = (int) $event->getArgument('id');
-        $editLanguageId = (int) $this->getRequest()->query->get('edit_language_id', $this->getSession()->getLang()->getId());
+        $request = $this->getRequest();
+        $defaultLanguageId = (null !== $request && $request->hasSession())
+            ? $this->getSession()->getLang()->getId()
+            : Lang::getDefaultLanguage()->getId();
+        $editLanguageId = (int) ($request?->query->get('edit_language_id', $defaultLanguageId) ?? $defaultLanguageId);
         $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
 
         /** @var Content $content */
@@ -199,7 +208,11 @@ class TabHook extends BaseHook
     public function onCategoryTab(HookRenderBlockEvent $event): void
     {
         $categoryId = (int) $event->getArgument('id');
-        $editLanguageId = (int) $this->getRequest()->query->get('edit_language_id', $this->getSession()->getLang()->getId());
+        $request = $this->getRequest();
+        $defaultLanguageId = (null !== $request && $request->hasSession())
+            ? $this->getSession()->getLang()->getId()
+            : Lang::getDefaultLanguage()->getId();
+        $editLanguageId = (int) ($request?->query->get('edit_language_id', $defaultLanguageId) ?? $defaultLanguageId);
         $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
 
         /** @var Category $category */
@@ -273,7 +286,11 @@ class TabHook extends BaseHook
     public function onFolderTab(HookRenderBlockEvent $event): void
     {
         $folderId = (int) $event->getArgument('id');
-        $editLanguageId = (int) $this->getRequest()->query->get('edit_language_id', $this->getSession()->getLang()->getId());
+        $request = $this->getRequest();
+        $defaultLanguageId = (null !== $request && $request->hasSession())
+            ? $this->getSession()->getLang()->getId()
+            : Lang::getDefaultLanguage()->getId();
+        $editLanguageId = (int) ($request?->query->get('edit_language_id', $defaultLanguageId) ?? $defaultLanguageId);
         $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
 
         /** @var Folder $folder */

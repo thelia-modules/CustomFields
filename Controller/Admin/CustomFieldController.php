@@ -37,6 +37,7 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Translation\Translator;
 use Thelia\Form\Exception\FormValidationException;
 use Thelia\Log\Tlog;
+use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\TokenProvider;
 use Thelia\Tools\URL;
@@ -68,7 +69,11 @@ final class CustomFieldController extends BaseAdminController
 
         $generalValues = [];
         $generalValueIds = [];
-        $editLanguageId = (int) $this->getRequest()->query->get('edit_language_id', $this->getSession()->getLang()->getId());
+        $request = $this->getRequest();
+        $defaultLanguageId = $request->hasSession()
+            ? $this->getSession()->getLang()->getId()
+            : Lang::getDefaultLanguage()->getId();
+        $editLanguageId = (int) $request->query->get('edit_language_id', $defaultLanguageId);
 
         $locale = LangQuery::create()->findOneById($editLanguageId)->getLocale();
 
