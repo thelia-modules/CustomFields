@@ -16,6 +16,7 @@ use CustomFields\Model\Map\CustomFieldTableMap;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Annotation\Route;
@@ -25,6 +26,7 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Translation\Translator;
 use Thelia\Form\Exception\FormValidationException;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 use Thelia\Tools\URL;
 
 #[AsController]
@@ -154,12 +156,14 @@ final class CustomFieldValueController extends BaseAdminController
         );
     }
 
-    #[Route(path: '/image/delete/{id}', name: 'image_delete', methods: ['POST', 'GET'])]
-    public function deleteCustomFieldImage(int $id): Response
+    #[Route(path: '/image/delete/{id}', name: 'image_delete', methods: ['POST'])]
+    public function deleteCustomFieldImage(int $id, Request $request, TokenProvider $tokenProvider): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::DELETE)) {
             return $response;
         }
+
+        $tokenProvider->checkToken((string) $request->query->get('_token'));
 
         $customFieldImage = CustomFieldImageQuery::create()->findPk($id);
 
