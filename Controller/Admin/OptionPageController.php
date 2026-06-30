@@ -15,6 +15,7 @@ use CustomFields\Service\RepeaterDataLoaderService;
 use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Annotation\Route;
@@ -24,6 +25,7 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Translation\Translator;
 use Thelia\Form\Exception\FormValidationException;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 use Thelia\Tools\URL;
 
 #[AsController]
@@ -92,12 +94,14 @@ final class OptionPageController extends BaseAdminController
         }
     }
 
-    #[Route(path: '/delete/{id}', name: 'delete', methods: ['GET'])]
-    public function deleteOptionPage(int $id): Response
+    #[Route(path: '/delete/{id}', name: 'delete', methods: ['POST'])]
+    public function deleteOptionPage(int $id, Request $request, TokenProvider $tokenProvider): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::DELETE)) {
             return $response;
         }
+
+        $tokenProvider->checkToken((string) $request->query->get('_token'));
 
         $optionPage = CustomFieldOptionPageQuery::create()->findPk($id);
 

@@ -26,6 +26,7 @@ use Propel\Runtime\Exception\PropelException;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\Form;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -37,6 +38,7 @@ use Thelia\Core\Translation\Translator;
 use Thelia\Form\Exception\FormValidationException;
 use Thelia\Log\Tlog;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 use Thelia\Tools\URL;
 
 #[AsController]
@@ -412,12 +414,14 @@ final class CustomFieldController extends BaseAdminController
         }
     }
 
-    #[Route(path: '/delete/{id}', name: 'delete', methods: ['GET'])]
-    public function deleteCustomField(int $id): Response
+    #[Route(path: '/delete/{id}', name: 'delete', methods: ['POST'])]
+    public function deleteCustomField(int $id, Request $request, TokenProvider $tokenProvider): Response
     {
         if (null !== $response = $this->checkAuth(AdminResources::MODULE, 'CustomFields', AccessManager::DELETE)) {
             return $response;
         }
+
+        $tokenProvider->checkToken((string) $request->query->get('_token'));
 
         $customField = CustomFieldQuery::create()->findPk($id);
 

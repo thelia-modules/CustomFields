@@ -26,12 +26,12 @@
                                 <a href="/admin/module/customfields/option-pages/view/{{ page.id }}" class="btn btn-sm btn-primary" title="{{ 'View'|trans }}">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="/admin/module/customfields/option-pages/delete/{{ page.id }}"
-                                   class="btn btn-sm btn-danger"
-                                   title="{{ 'Delete'|trans }}"
-                                   onclick="return confirm('{{ 'Are you sure you want to delete this option page?'|trans({}, 'customfields') }}');">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <form method="post" class="d-inline" action="/admin/module/customfields/option-pages/delete/{{ page.id }}?_token={{ assignToken() }}"
+                                      onsubmit="return confirm('{{ 'Are you sure you want to delete this option page?'|trans({}, 'customfields') }}');">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}

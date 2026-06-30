@@ -50,10 +50,12 @@
                                         <a href="/admin/module/customfields/update/{{ custom_field.id }}" class="btn btn-sm btn-secondary" title="{{ 'Edit'|trans({}, 'customfields') }}">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a href="/admin/module/customfields/delete/{{ custom_field.id }}" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}"
-                                           onclick="return confirm('{{ 'Delete this custom field?'|trans({}, 'customfields') }}');">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
+                                        <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ custom_field.id }}?_token={{ assignToken() }}"
+                                              onsubmit="return confirm('{{ 'Delete this custom field?'|trans({}, 'customfields') }}');">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
 
@@ -82,10 +84,12 @@
                                                     <a href="/admin/module/customfields/update/{{ sub_cf.id }}" class="btn btn-sm btn-secondary" title="{{ 'Edit'|trans({}, 'customfields') }}">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
-                                                    <a href="/admin/module/customfields/delete/{{ sub_cf.id }}" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}"
-                                                       onclick="return confirm('{{ 'Delete this sub-field?'|trans({}, 'customfields') }}');">
-                                                        <i class="bi bi-trash"></i>
-                                                    </a>
+                                                    <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ sub_cf.id }}?_token={{ assignToken() }}"
+                                                          onsubmit="return confirm('{{ 'Delete this sub-field?'|trans({}, 'customfields') }}');">
+                                                        <button type="submit" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         {% endif %}
