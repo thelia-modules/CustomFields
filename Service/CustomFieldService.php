@@ -68,14 +68,21 @@ class CustomFieldService
             return null;
         }
 
+        // Image fields are tested first: they carry no translation, so the
+        // international test below would short-circuit them and return an empty
+        // simple_value. The custom field value id is returned, which is what the
+        // custom_field_images() Twig function expects as its argument.
+        if ($customField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
+            return $customFieldValue->getCustomFieldImages()->isEmpty()
+                ? null
+                : $customFieldValue->getId();
+        }
+
         if (
             in_array($customField->getType(), CustomFieldValueController::CUSTOM_FIELD_SIMPLE_VALUES)
             || !$customField->isInternational()
         ) {
             return $customFieldValue->getSimpleValue();
-        }
-        if ($customField->getType() === CustomFieldTableMap::COL_TYPE_IMAGE) {
-            return $customFieldValue->getCustomFieldImages()->getFirst()->getId();
         }
 
         // Set locale if provided
