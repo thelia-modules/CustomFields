@@ -102,4 +102,5 @@ return [
     // Code validation
     'This code already exists. Please choose another code.' => 'Ce code existe déjà. Veuillez choisir un autre code.',
     'This code already exists in this repeater. Please choose another code.' => 'Ce code existe déjà dans ce répéteur. Veuillez choisir un autre code.',
+    'Only JPEG, PNG, GIF, WebP and plain SVG images can be used here.' => 'Seules les images JPEG, PNG, GIF, WebP et les SVG sans script peuvent être utilisées ici.',
 ];
