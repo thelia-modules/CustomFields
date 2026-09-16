@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CustomFields\Controller\Admin;
 
+use CustomFields\Service\UploadedImageGuard;
 use CustomFields\Form\CustomFieldValueForm;
 use CustomFields\Model\CustomFieldImage;
 use CustomFields\Model\CustomFieldImageQuery;
@@ -387,8 +388,10 @@ final class CustomFieldValueController extends BaseAdminController
                 mkdir($uploadDir, 0777, true);
             }
 
-            // Generate unique filename
-            $fileName = uniqid() . '_' . $uploadedFile->getClientOriginalName();
+            // The stored name is the name the public cache serves, so it is
+            // built from the format read out of the file rather than from
+            // anything the browser sent.
+            $fileName = (new UploadedImageGuard())->generateFileName($uploadedFile);
             $uploadedFile->move($uploadDir, $fileName);
 
             // Find or create custom field value first

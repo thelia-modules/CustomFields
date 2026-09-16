@@ -100,4 +100,5 @@ return [
     // Code validation
     'This code already exists. Please choose another code.' => 'This code already exists. Please choose another code.',
     'This code already exists in this repeater. Please choose another code.' => 'This code already exists in this repeater. Please choose another code.',
+    'Only JPEG, PNG, GIF, WebP and plain SVG images can be used here.' => 'Only JPEG, PNG, GIF, WebP and plain SVG images can be used here.',
 ];
