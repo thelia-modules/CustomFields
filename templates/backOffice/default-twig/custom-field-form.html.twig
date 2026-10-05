@@ -161,8 +161,9 @@
                                                         <a href="/admin/module/customfields/update/{{ sub_field.id }}" class="btn btn-sm btn-secondary">
                                                             <i class="bi bi-pencil"></i>
                                                         </a>
-                                                        <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ sub_field.id }}?_token={{ assignToken() }}"
+                                                        <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ sub_field.id }}"
                                                               onsubmit="return confirm('{{ 'Delete this sub-field?'|trans({}, 'customfields') }}');">
+                                                            <input type="hidden" name="_token" value="{{ assignToken() }}">
                                                             <button type="submit" class="btn btn-sm btn-danger">
                                                                 <i class="bi bi-trash"></i>
                                                             </button>
