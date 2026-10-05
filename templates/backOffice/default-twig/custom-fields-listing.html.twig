@@ -50,8 +50,9 @@
                                         <a href="/admin/module/customfields/update/{{ custom_field.id }}" class="btn btn-sm btn-secondary" title="{{ 'Edit'|trans({}, 'customfields') }}">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ custom_field.id }}?_token={{ assignToken() }}"
+                                        <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ custom_field.id }}"
                                               onsubmit="return confirm('{{ 'Delete this custom field?'|trans({}, 'customfields') }}');">
+                                            <input type="hidden" name="_token" value="{{ assignToken() }}">
                                             <button type="submit" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}">
                                                 <i class="bi bi-trash"></i>
                                             </button>
@@ -84,8 +85,9 @@
                                                     <a href="/admin/module/customfields/update/{{ sub_cf.id }}" class="btn btn-sm btn-secondary" title="{{ 'Edit'|trans({}, 'customfields') }}">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
-                                                    <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ sub_cf.id }}?_token={{ assignToken() }}"
+                                                    <form method="post" class="d-inline" action="/admin/module/customfields/delete/{{ sub_cf.id }}"
                                                           onsubmit="return confirm('{{ 'Delete this sub-field?'|trans({}, 'customfields') }}');">
+                                                        <input type="hidden" name="_token" value="{{ assignToken() }}">
                                                         <button type="submit" class="btn btn-sm btn-danger" title="{{ 'Delete'|trans({}, 'customfields') }}">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
