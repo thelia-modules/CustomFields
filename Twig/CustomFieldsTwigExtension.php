@@ -79,7 +79,7 @@ class CustomFieldsTwigExtension extends AbstractExtension
     }
 
     /**
-     * Get image ID for a custom image field, usable with custom_field_image_loop.
+     * Get image ID for a custom image field.
      * Usage: {{ custom_field_image('my_image_code', 'product', product_id) }}
      */
     public function getCustomFieldImage(string $code, ?string $source = 'general', ?int $sourceId = null, ?string $locale = null): ?int
