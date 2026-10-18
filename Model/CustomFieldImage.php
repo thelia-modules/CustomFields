@@ -31,7 +31,7 @@ class CustomFieldImage extends BaseCustomFieldImage implements FileModelInterfac
 
     public function getParentFileModel(): FileModelParentInterface
     {
-        return new static();
+        return new self();
     }
 
     public function getUpdateFormId(): string
@@ -91,7 +91,8 @@ class CustomFieldImage extends BaseCustomFieldImage implements FileModelInterfac
 
     public function setVisible(?int $visible = null): static
     {
-        // TODO: Implement setVisible() method.
+        // Images of a custom field have no visibility flag.
+        return $this;
     }
 
     public function getDescription(): null

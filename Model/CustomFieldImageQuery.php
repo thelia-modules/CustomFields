@@ -26,7 +26,7 @@ class CustomFieldImageQuery extends BaseCustomFieldImageQuery
         if ($columnName === 'Position') {
             return $this;
         }
-       $this->orderBy($columnName, $order);
+        return parent::orderBy($columnName, $order);
     }
 
 }
