@@ -103,7 +103,7 @@ class CustomFieldService
      *
      * @return string|null The custom field value or null if not found
      */
-    public function getCustomFieldValueByLangId(string $code, ?string $source = 'general', int $sourceId, int $languageId): ?string
+    public function getCustomFieldValueByLangId(string $code, ?string $source, int $sourceId, int $languageId): ?string
     {
         $lang = LangQuery::create()->findOneById($languageId);
 
