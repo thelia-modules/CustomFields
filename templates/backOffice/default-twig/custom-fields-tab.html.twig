@@ -42,6 +42,7 @@
             </div>
         {% endif %}
     </form>
+    {% include '@CustomFieldsModule/backOffice/default-twig/includes/delete-form.html.twig' %}
     {{ safe_hook('wysiwyg.js', {location: 'wysiwyg-customfields-edit-js'}) }}
 
     <script>

@@ -1,0 +1,3 @@
+{# Shared POST form for delete buttons rendered inside other forms (nested forms are invalid HTML).
+   Buttons target it with form="custom-fields-delete-form" and formaction. Include it outside any <form>. #}
+<form method="post" id="custom-fields-delete-form"><input type="hidden" name="_token" value="{{ assignToken() }}"></form>
