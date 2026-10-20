@@ -59,6 +59,7 @@
                                 page_bottom: true
                             } %}
                         </form>
+                        {% include '@CustomFieldsModule/backOffice/default-twig/includes/delete-form.html.twig' %}
                         {{ safe_hook('wysiwyg.js', {location: 'wysiwyg-customfields-optionpage-js'}) }}
 
                         <script>
